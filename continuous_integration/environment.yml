@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - python=3.6
-  - arm-pyart
+  - arm_pyart
   - nose
   - numpy
   - pandas
