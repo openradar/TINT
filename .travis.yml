@@ -1,0 +1,7 @@
+sudo: false   # Use container-based infrastructure.
+language: python
+
+# Create a test environment and install dependencies.
+install: source continuous_integration/install.sh
+# Command to run tests.
+script: nosetests -v
