@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python=3.6
   - arm_pyart
-  - nose
+  - pytest
   - numpy
   - pandas
   - scipy
