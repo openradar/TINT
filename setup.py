@@ -7,29 +7,18 @@ pyart grid objects.
 
 """
 
-
-DOCLINES = __doc__.split("\n")
-
-import os
-import shutil
-import sys
-import re
-import subprocess
 import glob
+import os
+import sys
+import subprocess
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
 else:
     import builtins
 
-# KLUDGE:
-# NumPy 1.11.2 contains a bug which prevents submodules from working correctly
-# on Python 3.4 unless importlib.machinery has been imported at some time.
-try:
-    import importlib.machinery
-except:
-    pass
 
+DOCLINES = __doc__.split("\n")
 
 CLASSIFIERS = """\
 Development Status :: 2 - Pre-Alpha
@@ -48,7 +37,6 @@ Operating System :: POSIX :: Linux
 Operating System :: MacOS :: MacOS X
 Operating System :: Microsoft :: Windows
 """
-
 
 NAME = 'tint'
 MAINTAINER = "ARM Developers"
@@ -93,6 +81,7 @@ def git_version():
 
     return GIT_REVISION
 
+
 # BEFORE importing distutils, remove MANIFEST. distutils doesn't properly
 # update it when the contents of directories change.
 if os.path.exists('MANIFEST'):
@@ -118,7 +107,7 @@ if not release:
     version = full_version
 """
     # Adding the git rev number needs to be done inside write_version_py(),
-    # otherwise the import of pyart.version messes up the build under Python 3.
+    # otherwise the import of tint.version messes up the build under Python 3.
     FULLVERSION = VERSION
     if os.path.exists('.git'):
         GIT_REVISION = git_version()
