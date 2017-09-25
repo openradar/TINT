@@ -1,6 +1,18 @@
 sudo: false   # Use container-based infrastructure.
 language: python
 
+matrix:
+    include:
+    - python: 2.7
+      env:
+        - PYTHON_VERSION="2.7"
+    - python: 3.5
+      env:
+        - PYTHON_VERSION="3.5"
+    - python: 3.6
+      env:
+        - PYTHON_VERSION="3.6"
+
 # Create a test environment and install dependencies.
 install: source continuous_integration/install.sh
 # Command to run tests.
