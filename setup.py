@@ -38,14 +38,15 @@ Operating System :: MacOS :: MacOS X
 Operating System :: Microsoft :: Windows
 """
 
-NAME = 'tint'
+NAME = "tint"
+AUTHORS = "Mark Picel, Bhupendra Raut"
 MAINTAINER = "ARM Developers"
 #MAINTAINER_EMAIL = ""
 DESCRIPTION = DOCLINES[0]
 LONG_DESCRIPTION = "\n".join(DOCLINES[2:])
 URL = "https://github.com/openradar/TINT.git"
 DOWNLOAD_URL = "https://github.com/openradar/TINT.git"
-LICENSE = 'BSD'
+LICENSE = "BSD"
 CLASSIFIERS = filter(None, CLASSIFIERS.split('\n'))
 PLATFORMS = ["Linux", "Mac OS-X", "Unix"]
 MAJOR = 0
@@ -156,6 +157,7 @@ def setup_package():
 
     setup(
         name=NAME,
+        author=AUTHORS,
         maintainer=MAINTAINER,
         #maintainer_email=MAINTAINER_EMAIL,
         description=DESCRIPTION,
