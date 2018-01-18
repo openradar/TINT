@@ -1,0 +1,39 @@
+TINT
+====
+TINT (TINT is not TITAN) is an easy-to-use storm cell tracking package based
+on the TITAN methodology by Dixon and Wiener. This code is in early alpha
+stage, so documentation and testing are still being built. If you have any
+suggestions or wish to contribute, please open an issue. Feel free to email
+me at mhpicel@gmail.com if you need assistance.
+
+Dependencies
+------------
+- NumPy
+- Pandas
+- SciPy
+- matplotlib
+- `Py-ART <http://arm-doe.github.io/pyart/>`_
+
+Install
+-------
+To install TINT, first install the dependencies listed above. NOTE: Py-ART
+needs to be installed from source because TINT requires updates that are ahead
+of the current conda and pypi release.
+
+Then clone::
+
+	git clone https://github.com/openradar/TINT.git
+
+then::
+
+	cd TINT
+	python setup.py install
+
+References
+----------
+Dixon, M. and G. Wiener, 1993: TITAN: Thunderstorm Identification, Tracking,
+Analysis, and Nowcasting—A Radar-based Methodology. J. Atmos. Oceanic
+Technol., 10, 785–797, doi: 10.1175/1520-0426(1993)010<0785:TTITAA>2.0.CO;2.
+
+Leese, J.A., C.S. Novak, and B.B. Clark, 1971: An Automated Technique for Obtaining Cloud Motion from Geosynchronous Satellite Data Using Cross Correlation. J. Appl. Meteor., 10, 118–132, doi: 10.1175/1520-0450(1971)010<0118:AATFOC>2.0.CO;2.
+
