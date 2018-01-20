@@ -10,7 +10,6 @@ import gc
 import os
 import numpy as np
 import shutil
-from matplotlib import animation
 from matplotlib import pyplot as plt
 
 import pyart
@@ -18,29 +17,8 @@ import pyart
 from .grid_utils import get_grid_alt
 
 
-def animate(tobj, grids, outfile_name, alt=2000, isolated_only=False, fps=1):
-    """
-    Creates gif animation of tracked cells.
-
-    Parameters
-    ----------
-    tobj : Cell_tracks
-        The Cell_tracks object to be visualized.
-    grids : iterable
-        An iterable containing all of the grids used to generate tobj
-    outfile_name : str
-        The name of the output file to be produced.
-    arrows : bool
-        If True, draws arrow showing corrected shift for each object.
-    isolation : bool
-        If True, only annotates uids for isolated objects.
-    fps : int
-        Frames per second for output gif.
-
-    """
-    tmp_dir = outfile_name + '_tmp_frames'
-    print('tmp_dir:', tmp_dir)
-    os.mkdir(tmp_dir)
+def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
+                   isolated_only=False, fps=1):
 
     grid_size = tobj.grid_size
     radar_lon = tobj.radar_info['radar_lon']
@@ -85,4 +63,45 @@ def animate(tobj, grids, outfile_name, alt=2000, isolated_only=False, fps=1):
               + outfile_name + ".mp4")
     shutil.move(outfile_name + '.mp4', '../')
     os.chdir('..')
-    shutil.rmtree(tmp_dir)
+
+
+def animate(tobj, grids, outfile_name, alt=2000,
+            isolated_only=False, fps=1):
+    """
+    Creates gif animation of tracked cells.
+
+    Parameters
+    ----------
+    tobj : Cell_tracks
+        The Cell_tracks object to be visualized.
+    grids : iterable
+        An iterable containing all of the grids used to generate tobj
+    outfile_name : str
+        The name of the output file to be produced.
+    arrows : bool
+        If True, draws arrow showing corrected shift for each object.
+    isolation : bool
+        If True, only annotates uids for isolated objects.
+    fps : int
+        Frames per second for output gif.
+
+    """
+
+    if os.path.exists(outfile_name + '.mp4'):
+        print('Filename already exists.')
+        return
+
+    try:
+        tmp_dir = outfile_name + '_tmp_frames'
+        os.mkdir(tmp_dir)
+    except FileExistsError:
+        print('Filename already exists.')
+        return
+
+    try:
+        make_animation(tobj, grids, outfile_name, tmp_dir,
+                       alt, isolated_only, fps)
+    finally:
+        if os.getcwd().split('/')[-1] == tmp_dir:
+            os.chdir('..')
+        shutil.rmtree(tmp_dir)
