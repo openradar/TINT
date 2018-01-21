@@ -13,6 +13,7 @@ Dependencies
 - SciPy
 - matplotlib
 - `Py-ART <http://arm-doe.github.io/pyart/>`_
+- `ffmpeg <https://www.ffmpeg.org/>`_
 
 Install
 -------
