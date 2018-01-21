@@ -18,7 +18,7 @@ from .grid_utils import get_grid_alt
 
 
 def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
-                   isolated_only=False, fps=1):
+                   isolated_only=False, fps=1, basemap_res='l'):
 
     grid_size = tobj.grid_size
     radar_lon = tobj.radar_info['radar_lon']
@@ -35,7 +35,8 @@ def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
         print('Frame:', nframe)
         display = pyart.graph.GridMapDisplay(grid)
         ax = fig_grid.add_subplot(111)
-        display.plot_basemap(resolution='h', lat_lines=lat, lon_lines=lon)
+        display.plot_basemap(resolution=basemap_res,
+                             lat_lines=lat, lon_lines=lon)
         display.plot_crosshairs(lon=radar_lon, lat=radar_lat)
         display.plot_grid(tobj.field, level=2*get_grid_alt(grid_size, alt),
                           vmin=-8, vmax=64, mask_outside=False,
@@ -61,12 +62,15 @@ def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
               + " -movflags faststart -pix_fmt yuv420p -vf"
               + " 'scale=trunc(iw/2)*2:trunc(ih/2)*2' -y "
               + outfile_name + ".mp4")
-    shutil.move(outfile_name + '.mp4', '../')
+    try:
+        shutil.move(outfile_name + '.mp4', '../')
+    except FileNotFoundError:
+        print('Make sure ffmpeg is installed properly.')
     os.chdir('..')
 
 
 def animate(tobj, grids, outfile_name, alt=2000,
-            isolated_only=False, fps=1):
+            isolated_only=False, fps=1, basemap_res='l'):
     """
     Creates gif animation of tracked cells.
 
@@ -100,7 +104,7 @@ def animate(tobj, grids, outfile_name, alt=2000,
 
     try:
         make_animation(tobj, grids, outfile_name, tmp_dir,
-                       alt, isolated_only, fps)
+                       alt, isolated_only, fps, basemap_res)
     finally:
         if os.getcwd().split('/')[-1] == tmp_dir:
             os.chdir('..')
