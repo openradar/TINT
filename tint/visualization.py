@@ -61,7 +61,10 @@ def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
               + " -movflags faststart -pix_fmt yuv420p -vf"
               + " 'scale=trunc(iw/2)*2:trunc(ih/2)*2' -y "
               + outfile_name + ".mp4")
-    shutil.move(outfile_name + '.mp4', '../')
+    try:
+        shutil.move(outfile_name + '.mp4', '../')
+    except FileNotFoundError:
+        print('Make sure ffmpeg is installed properly.')
     os.chdir('..')
 
 
