@@ -30,6 +30,10 @@ then::
 	cd TINT
 	python setup.py install
 
+Acknowledgements
+----------------
+Thanks to Bhupendra Raut for creating the original protoype for this tracking method in R. 
+
 References
 ----------
 Dixon, M. and G. Wiener, 1993: TITAN: Thunderstorm Identification, Tracking,
