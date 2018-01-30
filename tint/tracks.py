@@ -24,8 +24,8 @@ FIELD_THRESH = 32
 ISO_THRESH = 8
 ISO_SMOOTH = 3
 MIN_SIZE = 32
-SEARCH_MARGIN = 8
-FLOW_MARGIN = 20
+SEARCH_MARGIN = 4000
+FLOW_MARGIN = 10000
 MAX_DISPARITY = 999
 MAX_FLOW_MAG = 50
 MAX_SHIFT_DISP = 15
@@ -46,9 +46,9 @@ ISO_SMOOTH : pixels
     single_max in tint.objects.
 MIN_SIZE : pixels
     The minimum size threshold in pixels for an object to be detected.
-SEARCH_MARGIN : pixels
+SEARCH_MARGIN : meters
     The radius of the search box around the predicted object center.
-FLOW_MARGIN : pixels
+FLOW_MARGIN : meters
     The margin size around the object extent on which to perform phase
     correlation.
 MAX_DISPARITY : float
