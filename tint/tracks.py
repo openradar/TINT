@@ -54,10 +54,10 @@ FLOW_MARGIN : pixels
 MAX_DISPARITY : float
     Maximum allowable disparity value. Larger disparity values are sent to
     LARGE_NUM.
-MAX_FLOW_MAG : pixels
+MAX_FLOW_MAG : meters per second
     Maximum allowable global shift magnitude. See get_global_shift in
     tint.phase_correlation.
-MAX_SHIFT_DISP : float
+MAX_SHIFT_DISP : meters per second
     Maximum magnitude of difference in meters per second for two shifts to be
     considered in agreement. See correct_shift in tint.matching.
 GS_ALT : meters
