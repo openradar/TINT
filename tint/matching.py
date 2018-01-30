@@ -56,6 +56,20 @@ def shifts_disagree(shift1, shift2, record, params):
     return shift_disparity/record.interval.seconds > params['MAX_SHIFT_DISP']
 
 
+def clip_shift(shift, record, params):
+    """ Clips shift according to MAX_FLOW_MAG paramter. """
+    shift_meters = shift * record.grid_size[1:]
+    shift_mag = np.linalg.norm(shift_meters)
+    velocity = shift_mag/record.interval.seconds
+    unit = shift_meters/shift_mag
+    if velocity > params['MAX_FLOW_MAG']:
+        clipped = unit * params['MAX_FLOW_MAG'] * record.interval.seconds
+        clipped_pix = clipped/record.grid_size[1:]
+        return clipped_pix
+    else:
+        return shift
+
+
 def correct_shift(local_shift, current_objects, obj_id1, global_shift, record,
                   params):
     """ Takes in flow vector based on local phase correlation (see
@@ -64,6 +78,8 @@ def correct_shift(local_shift, current_objects, obj_id1, global_shift, record,
     Note: At the time of this function call, current_objects has not yet been
     updated for the current frame1 and frame2, so the id2s in current_objects
     correspond to the objects in the current frame1. """
+    global_shift = clip_shift(global_shift, record, params)
+
     if current_objects is None:
         last_heads = None
     else:
