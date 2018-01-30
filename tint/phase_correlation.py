@@ -91,8 +91,5 @@ def get_global_shift(im1, im2, params):
     of raw DBZ values. """
     if im2 is None:
         return None
-    magnitude = params['MAX_FLOW_MAG']
     shift = fft_flowvectors(im1, im2, global_shift=True)
-    shift[shift > magnitude] = magnitude
-    shift[shift < -magnitude] = -magnitude
     return shift
