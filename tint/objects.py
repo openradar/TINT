@@ -107,13 +107,14 @@ def attach_last_heads(frame1, frame2, current_objects):
     return current_objects
 
 
-def check_isolation(raw, filtered, params):
+def check_isolation(raw, filtered, grid_size, params):
     """ Returns list of booleans indicating object isolation. Isolated objects
     are not connected to any other objects by pixels greater than ISO_THRESH,
     and have at most one peak. """
     nobj = np.max(filtered)
+    min_size = params['MIN_SIZE'] / np.prod(grid_size[1:]/1000)
     iso_filtered = get_filtered_frame(raw,
-                                      params['MIN_SIZE'],
+                                      min_size,
                                       params['ISO_THRESH'])
     nobj_iso = np.max(iso_filtered)
     iso = np.empty(nobj, dtype='bool')
@@ -203,7 +204,7 @@ def get_object_prop(image1, grid1, field, record, params):
         volume.append(np.sum(filtered_slices) * unit_vol)
 
     # cell isolation
-    isolation = check_isolation(raw3D, image1, params)
+    isolation = check_isolation(raw3D, image1, record.grid_size, params)
 
     objprop = {'id1': id1,
                'center': center,
