@@ -11,15 +11,16 @@ import numpy as np
 from scipy import ndimage
 
 
-def get_ambient_flow(obj_extent, img1, img2, params):
+def get_ambient_flow(obj_extent, img1, img2, params, grid_size):
     """ Takes in object extent and two images and returns ambient flow. Margin
     is the additional region around the object used to compute the flow
     vectors. """
-    margin = params['FLOW_MARGIN']
-    row_lb = obj_extent['obj_center'][0] - obj_extent['obj_radius'] - margin
-    row_ub = obj_extent['obj_center'][0] + obj_extent['obj_radius'] + margin
-    col_lb = obj_extent['obj_center'][1] - obj_extent['obj_radius'] - margin
-    col_ub = obj_extent['obj_center'][1] + obj_extent['obj_radius'] + margin
+    margin_r = params['FLOW_MARGIN'] / grid_size[1]
+    margin_c = params['FLOW_MARGIN'] / grid_size[2]
+    row_lb = obj_extent['obj_center'][0] - obj_extent['obj_radius'] - margin_r
+    row_ub = obj_extent['obj_center'][0] + obj_extent['obj_radius'] + margin_r
+    col_lb = obj_extent['obj_center'][1] - obj_extent['obj_radius'] - margin_c
+    col_ub = obj_extent['obj_center'][1] + obj_extent['obj_radius'] + margin_c
     row_lb = np.int(row_lb)
     row_ub = np.int(row_ub)
     col_lb = np.int(col_lb)
@@ -91,8 +92,5 @@ def get_global_shift(im1, im2, params):
     of raw DBZ values. """
     if im2 is None:
         return None
-    magnitude = params['MAX_FLOW_MAG']
     shift = fft_flowvectors(im1, im2, global_shift=True)
-    shift[shift > magnitude] = magnitude
-    shift[shift < -magnitude] = -magnitude
     return shift

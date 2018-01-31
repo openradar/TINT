@@ -56,6 +56,20 @@ def shifts_disagree(shift1, shift2, record, params):
     return shift_disparity/record.interval.seconds > params['MAX_SHIFT_DISP']
 
 
+def clip_shift(shift, record, params):
+    """ Clips shift according to MAX_FLOW_MAG paramter. """
+    shift_meters = shift * record.grid_size[1:]
+    shift_mag = np.linalg.norm(shift_meters)
+    velocity = shift_mag/record.interval.seconds
+    unit = shift_meters/shift_mag
+    if velocity > params['MAX_FLOW_MAG']:
+        clipped = unit * params['MAX_FLOW_MAG'] * record.interval.seconds
+        clipped_pix = clipped/record.grid_size[1:]
+        return clipped_pix
+    else:
+        return shift
+
+
 def correct_shift(local_shift, current_objects, obj_id1, global_shift, record,
                   params):
     """ Takes in flow vector based on local phase correlation (see
@@ -64,6 +78,8 @@ def correct_shift(local_shift, current_objects, obj_id1, global_shift, record,
     Note: At the time of this function call, current_objects has not yet been
     updated for the current frame1 and frame2, so the id2s in current_objects
     correspond to the objects in the current frame1. """
+    global_shift = clip_shift(global_shift, record, params)
+
     if current_objects is None:
         last_heads = None
     else:
@@ -101,15 +117,16 @@ def correct_shift(local_shift, current_objects, obj_id1, global_shift, record,
     return corrected_shift
 
 
-def predict_search_extent(obj1_extent, shift, params):
+def predict_search_extent(obj1_extent, shift, params, grid_size):
     """ Predicts search extent/region for the object in image2 given
     the image shift. """
     shifted_center = obj1_extent['obj_center'] + shift
-    search_radius = params['SEARCH_MARGIN']
-    x1 = shifted_center[0] - search_radius
-    x2 = shifted_center[0] + search_radius + 1
-    y1 = shifted_center[1] - search_radius
-    y2 = shifted_center[1] + search_radius + 1
+    search_radius_r = params['SEARCH_MARGIN'] / grid_size[1]
+    search_radius_c = params['SEARCH_MARGIN'] / grid_size[2]
+    x1 = shifted_center[0] - search_radius_r
+    x2 = shifted_center[0] + search_radius_r + 1
+    y1 = shifted_center[1] - search_radius_c
+    y2 = shifted_center[1] + search_radius_c + 1
     x1 = np.int(x1)
     x2 = np.int(x2)
     y1 = np.int(y1)
@@ -191,7 +208,8 @@ def locate_allObjects(image1, image2, global_shift, current_objects, record,
 
     for obj_id1 in np.arange(nobj1) + 1:
         obj1_extent = get_obj_extent(image1, obj_id1)
-        shift = get_ambient_flow(obj1_extent, image1, image2, params)
+        shift = get_ambient_flow(obj1_extent, image1,
+                                 image2, params, record.grid_size)
         if shift is None:
             record.count_case(5)
             shift = global_shift
@@ -199,7 +217,8 @@ def locate_allObjects(image1, image2, global_shift, current_objects, record,
         shift = correct_shift(shift, current_objects, obj_id1,
                               global_shift, record, params)
 
-        search_box = predict_search_extent(obj1_extent, shift, params)
+        search_box = predict_search_extent(obj1_extent, shift,
+                                           params, record.grid_size)
         search_box = check_search_box(search_box, image2.shape)
         objs_found = find_objects(search_box, image2)
         disparity = get_disparity_all(objs_found, image2,

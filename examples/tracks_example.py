@@ -28,7 +28,7 @@ tracks_obj = Cell_tracks()
 print(tracks_obj.params)
 
 # Adjust size parameter
-tracks_obj.params['MIN_SIZE'] = 16
+tracks_obj.params['MIN_SIZE'] = 4
 
 # Get tracks from grid generator
 tracks_obj.get_tracks(grid_gen)

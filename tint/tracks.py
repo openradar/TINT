@@ -23,10 +23,9 @@ from .objects import get_object_prop, write_tracks
 FIELD_THRESH = 32
 ISO_THRESH = 8
 ISO_SMOOTH = 3
-MIN_SIZE = 32
-NEAR_THRESH = 4
-SEARCH_MARGIN = 8
-FLOW_MARGIN = 20
+MIN_SIZE = 8
+SEARCH_MARGIN = 4000
+FLOW_MARGIN = 10000
 MAX_DISPARITY = 999
 MAX_FLOW_MAG = 50
 MAX_SHIFT_DISP = 15
@@ -45,20 +44,20 @@ ISO_THRESH : units of 'field' attribute
 ISO_SMOOTH : pixels
     Gaussian smoothing parameter in peak detection preprocessing. See
     single_max in tint.objects.
-MIN_SIZE : pixels
+MIN_SIZE : square kilometers
     The minimum size threshold in pixels for an object to be detected.
-SEARCH_MARGIN : pixels
+SEARCH_MARGIN : meters
     The radius of the search box around the predicted object center.
-FLOW_MARGIN : pixels
+FLOW_MARGIN : meters
     The margin size around the object extent on which to perform phase
     correlation.
 MAX_DISPARITY : float
     Maximum allowable disparity value. Larger disparity values are sent to
     LARGE_NUM.
-MAX_FLOW_MAG : pixels
+MAX_FLOW_MAG : meters per second
     Maximum allowable global shift magnitude. See get_global_shift in
     tint.phase_correlation.
-MAX_SHIFT_DISP : float
+MAX_SHIFT_DISP : meters per second
     Maximum magnitude of difference in meters per second for two shifts to be
     considered in agreement. See correct_shift in tint.matching.
 GS_ALT : meters

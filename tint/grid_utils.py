@@ -77,10 +77,11 @@ def clear_small_echoes(label_image, min_size):
 def extract_grid_data(grid_obj, field, grid_size, params):
     """ Returns filtered grid frame and raw grid slice at global shift
     altitude. """
+    min_size = params['MIN_SIZE'] / np.prod(grid_size[1:]/1000)
     masked = grid_obj.fields[field]['data']
     masked.data[masked.data == masked.fill_value] = 0
     gs_alt = params['GS_ALT']
     raw = masked.data[get_grid_alt(grid_size, gs_alt), :, :]
-    frame = get_filtered_frame(masked.data, params['MIN_SIZE'],
+    frame = get_filtered_frame(masked.data, min_size,
                                params['FIELD_THRESH'])
     return raw, frame
