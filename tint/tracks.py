@@ -23,7 +23,7 @@ from .objects import get_object_prop, write_tracks
 FIELD_THRESH = 32
 ISO_THRESH = 8
 ISO_SMOOTH = 3
-MIN_SIZE = 32
+MIN_SIZE = 8
 SEARCH_MARGIN = 4000
 FLOW_MARGIN = 10000
 MAX_DISPARITY = 999
@@ -44,7 +44,7 @@ ISO_THRESH : units of 'field' attribute
 ISO_SMOOTH : pixels
     Gaussian smoothing parameter in peak detection preprocessing. See
     single_max in tint.objects.
-MIN_SIZE : pixels
+MIN_SIZE : square kilometers
     The minimum size threshold in pixels for an object to be detected.
 SEARCH_MARGIN : meters
     The radius of the search box around the predicted object center.
