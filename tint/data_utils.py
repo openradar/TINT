@@ -79,6 +79,6 @@ def get_nexrad_keys(site, start=None, end=None):
                for key in keys]
     key_dts = zip(keys, key_dts)
     keys = [key for key, dt in key_dts if dt > start and dt < end]
-    print('Found', len(keys), 'files.')
+    print('Found', len(keys), 'keys.')
 
     return keys
