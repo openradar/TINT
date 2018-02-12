@@ -10,6 +10,7 @@ import gc
 import os
 import numpy as np
 import shutil
+import tempfile
 from matplotlib import pyplot as plt
 
 import pyart
@@ -17,7 +18,7 @@ import pyart
 from .grid_utils import get_grid_alt
 
 
-def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
+def make_animation(tobj, grids, basename, tmp_dir, dest_dir, alt=2000,
                    isolated_only=False, fps=1, basemap_res='l'):
 
     grid_size = tobj.grid_size
@@ -30,7 +31,6 @@ def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
     print('Animating', nframes, 'frames')
 
     for nframe, grid in enumerate(grids):
-        plt.clf()
         fig_grid = plt.figure(figsize=(10, 8))
         print('Frame:', nframe)
         display = pyart.graph.GridMapDisplay(grid)
@@ -52,21 +52,25 @@ def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
                 ax.annotate(uid, (x, y), fontsize=20)
 
         plt.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png')
+        plt.close()
         del grid, display, ax
         gc.collect()
-    plt.close()
 
     os.chdir(tmp_dir)
+    print(os.getcwd())
+    print(os.listdir())
     os.system(" ffmpeg -framerate " + str(fps)
               + " -pattern_type glob -i '*.png'"
               + " -movflags faststart -pix_fmt yuv420p -vf"
               + " 'scale=trunc(iw/2)*2:trunc(ih/2)*2' -y "
-              + outfile_name + ".mp4")
+              + basename + '.mp4')
+
+    print(os.getcwd())
+    print(os.listdir())
     try:
-        shutil.move(outfile_name + '.mp4', '../')
+        shutil.move(basename + '.mp4', dest_dir)
     except FileNotFoundError:
         print('Make sure ffmpeg is installed properly.')
-    os.chdir('..')
 
 
 def animate(tobj, grids, outfile_name, alt=2000,
@@ -90,22 +94,19 @@ def animate(tobj, grids, outfile_name, alt=2000,
         Frames per second for output gif.
 
     """
+    dest_dir = os.path.dirname(outfile_name)
+    basename = os.path.basename(outfile_name)
+    if len(dest_dir) == 0:
+        dest_dir = os.getcwd()
 
-    if os.path.exists(outfile_name + '.mp4'):
+    if os.path.exists(basename + '.mp4'):
         print('Filename already exists.')
         return
 
-    try:
-        tmp_dir = outfile_name + '_tmp_frames'
-        os.mkdir(tmp_dir)
-    except FileExistsError:
-        print('Filename already exists.')
-        return
+    tmp_dir = tempfile.mkdtemp()
 
     try:
-        make_animation(tobj, grids, outfile_name, tmp_dir,
+        make_animation(tobj, grids, basename, tmp_dir, dest_dir,
                        alt, isolated_only, fps, basemap_res)
     finally:
-        if os.getcwd().split('/')[-1] == tmp_dir:
-            os.chdir('..')
         shutil.rmtree(tmp_dir)
