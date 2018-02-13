@@ -57,16 +57,11 @@ def make_animation(tobj, grids, basename, tmp_dir, dest_dir, alt=2000,
         gc.collect()
 
     os.chdir(tmp_dir)
-    print(os.getcwd())
-    print(os.listdir())
     os.system(" ffmpeg -framerate " + str(fps)
               + " -pattern_type glob -i '*.png'"
               + " -movflags faststart -pix_fmt yuv420p -vf"
               + " 'scale=trunc(iw/2)*2:trunc(ih/2)*2' -y "
               + basename + '.mp4')
-
-    print(os.getcwd())
-    print(os.listdir())
     try:
         shutil.move(basename + '.mp4', dest_dir)
     except FileNotFoundError:
