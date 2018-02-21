@@ -11,6 +11,7 @@ import os
 import numpy as np
 import shutil
 import tempfile
+from IPython.display import display, Image
 from matplotlib import pyplot as plt
 
 import pyart
@@ -105,3 +106,26 @@ def animate(tobj, grids, outfile_name, alt=2000,
                        alt, isolated_only, fps, basemap_res)
     finally:
         shutil.rmtree(tmp_dir)
+
+
+def embed_mp4_as_gif(filename):
+    """ Makes a temporary gif version of an mp4 using ffmpeg for embedding in
+    IPython. Intended for use in Jupyter notebooks. """
+    if not os.path.exists(filename):
+        print('file does not exist.')
+        return
+
+    dirname = os.path.dirname(filename)
+    basename = os.path.basename(filename)
+    newfile = tempfile.NamedTemporaryFile()
+    newname = newfile.name + '.gif'
+    if len(dirname) != 0:
+        os.chdir(dirname)
+
+    os.system('ffmpeg -i ' + basename + ' ' + newname)
+
+    try:
+        with open(newname, 'rb') as f:
+            display(Image(f.read()), format='png')
+    finally:
+        os.remove(newname)
