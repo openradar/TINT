@@ -69,7 +69,7 @@ def make_animation(tobj, grids, basename, tmp_dir, dest_dir, alt=2000,
         print('Make sure ffmpeg is installed properly.')
 
 
-def animate(tobj, grids, outfile_name, alt=2000,
+def animate(tobj, grids, outfile_name, alt=None,
             isolated_only=False, fps=1, basemap_res='l'):
     """
     Creates gif animation of tracked cells.
@@ -90,6 +90,9 @@ def animate(tobj, grids, outfile_name, alt=2000,
         Frames per second for output gif.
 
     """
+    if alt is None:
+        alt = tobj.params['GS_ALT']
+
     dest_dir = os.path.dirname(outfile_name)
     basename = os.path.basename(outfile_name)
     if len(dest_dir) == 0:
