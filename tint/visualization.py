@@ -11,6 +11,7 @@ import os
 import numpy as np
 import shutil
 import tempfile
+import matplotlib as mpl
 from IPython.display import display, Image
 from matplotlib import pyplot as plt
 
@@ -19,10 +20,12 @@ import pyart
 from .grid_utils import get_grid_alt
 
 
-def make_animation(tobj, grids, basename, tmp_dir, dest_dir, alt=2000,
-                   isolated_only=False, fps=1, basemap_res='l'):
+def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
+                basemap_res='l', isolated_only=False):
 
     grid_size = tobj.grid_size
+    if alt is None:
+        alt = tobj.params['GS_ALT']
     radar_lon = tobj.radar_info['radar_lon']
     radar_lat = tobj.radar_info['radar_lat']
     lon = np.arange(radar_lon-5, radar_lon+5, 0.5)
@@ -52,11 +55,138 @@ def make_animation(tobj, grids, basename, tmp_dir, dest_dir, alt=2000,
                 y = frame_tracks['grid_y'].iloc[ind]*grid_size[1]
                 ax.annotate(uid, (x, y), fontsize=20)
 
-        plt.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png')
+        plt.savefig(tmp_dir + 'frame_' + str(nframe).zfill(3) + '.png')
         plt.close()
         del grid, display, ax
         gc.collect()
 
+
+def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
+                    basemap_res='l', box_size=50):
+
+    if uid is None:
+        print("Please specify 'uid' keyword argument.")
+        return
+    stepsize = 6
+    title_font = 20
+    axes_font = 18
+    mpl.rcParams['xtick.labelsize'] = 16
+    mpl.rcParams['ytick.labelsize'] = 16
+
+    field = tobj.field
+    grid_size = tobj.grid_size
+    if alt is None:
+        alt = tobj.params['GS_ALT']
+    cell = tobj.tracks.xs()
+
+    for nframe, grid in enumerate(grids):
+        if nframe not in cell.index:
+            continue
+
+        row = cell.loc[nframe]
+        display = pyart.graph.GridMapDisplay(grid)
+
+        # Box Size
+        tx = row['grid_x']
+        ty = row['grid_y']
+        lat = row['lat']
+        lon = row['lon']
+        lvxlim = np.array([tx - box_size, tx + box_size]) * grid_size[1]
+        lvylim = np.array([ty - box_size, ty + box_size]) * grid_size[2]
+        field_shape = grid.fields[field]['data'].shape
+        bsx = tx-field_shape[2]/2
+        bsy = ty-field_shape[1]/2
+        xlim = np.array([bsx - box_size, bsx + box_size]) * grid_size[1]/1000
+        ylim = np.array([bsy - box_size, bsy + box_size]) * grid_size[2]/1000
+
+        fig = plt.figure(figsize=(25, 18))
+
+        fig.suptitle('Cell ' + uid + ' Scan ' + nframe, fontsize=22)
+        plt.axis('off')
+
+        # Lagrangian View
+        ax1 = fig.add_subplot(3, 2, (1, 3))
+
+        display.plot_grid(field, level=get_grid_alt(grid_size, 3000),
+                          vmin=vmin, vmax=vmax, mask_outside=False,
+                          cmap=pyart.graph.cm.NWSRef,
+                          ax=ax1, colorbar_flag=False, linewidth=4)
+        display.plot_crosshairs(lon=lon, lat=lat,
+                                line_style='k--', linewidth=3)
+
+        ax1.set_xlim(lvxlim[0], lvxlim[1])
+        ax1.set_ylim(lvylim[0], lvylim[1])
+
+        ax1.set_xticks(np.arange(lvxlim[0], lvxlim[1], (stepsize * 1000)))
+        ax1.set_yticks(np.arange(lvylim[0], lvylim[1], (stepsize * 1000)))
+        ax1.set_xticklabels(np.round(np.arange(xlim[0], xlim[1], stepsize), 1))
+        ax1.set_yticklabels(np.round(np.arange(ylim[0], ylim[1], stepsize), 1))
+
+        ax1.set_title('Top-Down View', fontsize=title_font)
+        ax1.set_xlabel('East West Distance From Origin (km)' + '\n',
+                       fontsize=axes_font)
+        ax1.set_ylabel('North South Distance From Origin (km)',
+                       fontsize=axes_font)
+
+        # Latitude Cross Section
+        ax2 = fig.add_subplot(3, 2, 2)
+        display.plot_latitude_slice(field, lon=lon, lat=lat,
+                                    title_flag=False,
+                                    colorbar_flag=False, edges=False,
+                                    vmin=vmin, vmax=vmax, mask_outside=False,
+                                    cmap=pyart.graph.cm.NWSRef,
+                                    ax=ax2)
+
+        ax2.set_xlim(xlim[0], xlim[1])
+        ax2.set_xticks(np.arange(xlim[0], xlim[1], stepsize))
+        ax2.set_xticklabels(np.round((np.arange(xlim[0], xlim[1], stepsize)),
+                                     2))
+
+        ax2.set_title('Latitude Cross Section', fontsize=title_font)
+        ax2.set_xlabel('East West Distance From Origin (km)' + '\n',
+                       fontsize=axes_font)
+        ax2.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
+        ax2.set_aspect(aspect=1.4)
+
+        # Longitude Cross Section
+        ax3 = fig.add_subplot(3, 2, 4)
+        display.plot_longitude_slice('reflectivity', lon=lon, lat=lat,
+                                     title_flag=False,
+                                     colorbar_flag=False, edges=False,
+                                     vmin=vmin, vmax=vmax, mask_outside=False,
+                                     cmap=pyart.graph.cm.NWSRef,
+                                     ax=ax3)
+        ax3.set_xlim(ylim[0], ylim[1])
+        ax3.set_xticks(np.arange(ylim[0], ylim[1], stepsize))
+        ax3.set_xticklabels(np.round(np.arange(ylim[0], ylim[1], stepsize), 2))
+
+        ax3.set_title('Longitudinal Cross Section', fontsize=title_font)
+        ax3.set_xlabel('North South Distance From Origin (km)',
+                       fontsize=axes_font)
+        ax3.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
+        ax3.set_aspect(aspect=1.4)
+
+        # Time Series Statistic
+        max_field = cell['max']
+        plttime = cell['time']
+
+        # Plot
+        ax4 = fig.add_subplot(3, 2, (5, 6))
+        ax4.plot(plttime, max_field, color='b', linewidth=3)
+        ax4.axvline(x=plttime[nframe], linewidth=4, color='r')
+        ax4.set_title('Time Series', fontsize=title_font)
+        ax4.set_xlabel('Time (UTC) \n Lagrangian Viewer Time',
+                       fontsize=axes_font)
+        ax4.set_ylabel('Maximum ' + field, fontsize=axes_font)
+
+        # plot and save figure
+        fig.savefig(tmp_dir + 'frame_' + str(nframe).zfill(3) + '.png')
+        plt.close()
+        del grid, display
+        gc.collect()
+
+
+def make_mp4_from_frames(tmp_dir, dest_dir, basename, fps):
     os.chdir(tmp_dir)
     os.system(" ffmpeg -framerate " + str(fps)
               + " -pattern_type glob -i '*.png'"
@@ -69,8 +199,7 @@ def make_animation(tobj, grids, basename, tmp_dir, dest_dir, alt=2000,
         print('Make sure ffmpeg is installed properly.')
 
 
-def animate(tobj, grids, outfile_name, alt=None,
-            isolated_only=False, fps=1, basemap_res='l'):
+def animate(tobj, grids, outfile_name, style='full', fps=1, **kwargs):
     """
     Creates gif animation of tracked cells.
 
@@ -90,8 +219,10 @@ def animate(tobj, grids, outfile_name, alt=None,
         Frames per second for output gif.
 
     """
-    if alt is None:
-        alt = tobj.params['GS_ALT']
+
+    styles = {'full': full_domain,
+              'lagrangian': lagrangian_view}
+    anim_func = styles[style]
 
     dest_dir = os.path.dirname(outfile_name)
     basename = os.path.basename(outfile_name)
@@ -105,8 +236,8 @@ def animate(tobj, grids, outfile_name, alt=None,
     tmp_dir = tempfile.mkdtemp()
 
     try:
-        make_animation(tobj, grids, basename, tmp_dir, dest_dir,
-                       alt, isolated_only, fps, basemap_res)
+        anim_func(tobj, grids, tmp_dir, **kwargs)
+        make_mp4_from_frames(tmp_dir, dest_dir, basename, fps)
     finally:
         shutil.rmtree(tmp_dir)
 
