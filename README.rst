@@ -6,6 +6,9 @@ stage, so documentation and testing are still being built. If you have any
 suggestions or wish to contribute, please open an issue. Feel free to email
 me at mhpicel@gmail.com if you need assistance.
 
+The development is currently led by the Data Informatics and Geophysical Retrievals (DIGR) group in the Environmental
+Sciences Group at Argonne National Laboratory. 
+
 Dependencies
 ------------
 - NumPy
@@ -32,11 +35,11 @@ then::
 
 Acknowledgements
 ----------------
-Thanks to Bhupendra Raut for creating the original protoype for this tracking
-method in R. 
+This work is the adaptation of tracking code in R created by Bhupendra Raut who was working at Monash University,
+Australia in the Australian Research Council's Centre of Excellence for Climate System Science led by Christian Jakob.
 
 The development of this software is supported by the Climate Model Development
-and Validation (CMDV) activity funded by the Office of Biological and
+and Validation (CMDV) activity which funded by the Office of Biological and
 Environmental Research in the US Department of Energy Office of Science.
 
 References
@@ -45,5 +48,6 @@ Dixon, M. and G. Wiener, 1993: TITAN: Thunderstorm Identification, Tracking,
 Analysis, and Nowcasting—A Radar-based Methodology. J. Atmos. Oceanic
 Technol., 10, 785–797, doi: 10.1175/1520-0426(1993)010<0785:TTITAA>2.0.CO;2.
 
-Leese, J.A., C.S. Novak, and B.B. Clark, 1971: An Automated Technique for Obtaining Cloud Motion from Geosynchronous Satellite Data Using Cross Correlation. J. Appl. Meteor., 10, 118–132, doi: 10.1175/1520-0450(1971)010<0118:AATFOC>2.0.CO;2.
+Leese, J.A., C.S. Novak, and B.B. Clark, 1971: An Automated Technique for Obtaining Cloud Motion from Geosynchronous
+Satellite Data Using Cross Correlation. J. Appl. Meteor., 10, 118–132, doi: 10.1175/1520-0450(1971)010<0118:AATFOC>2.0.CO;2.
 
