@@ -37,6 +37,9 @@ Acknowledgements
 ----------------
 This work is the adaptation of tracking code in R created by Bhupendra Raut who was working at Monash University,
 Australia in the Australian Research Council's Centre of Excellence for Climate System Science led by Christian Jakob.
+This work was supported by the Department of Energy, Atmospheric Systems Research (ASR) under Grant DE-SC0014063,
+“The vertical structure of convective mass-flux derived from modern radar systems - Data analysis in support of cumulus
+parametrization”
 
 The development of this software is supported by the Climate Model Development
 and Validation (CMDV) activity which funded by the Office of Biological and
