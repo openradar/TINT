@@ -32,8 +32,12 @@ then::
 
 Acknowledgements
 ----------------
-Thanks to Bhupendra Raut for creating the original protoype for this tracking method in R. 
+Thanks to Bhupendra Raut for creating the original protoype for this tracking
+method in R. 
 
+The development of this software is supported by the Climate Model Development
+and Validation (CMDV) activity funded by the Office of Biological and
+Environmental Research in the US Department of Energy Office of Science.
 References
 ----------
 Dixon, M. and G. Wiener, 1993: TITAN: Thunderstorm Identification, Tracking,
