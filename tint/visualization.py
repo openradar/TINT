@@ -119,9 +119,9 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
                           cmap=pyart.graph.cm.NWSRef,
                           ax=ax1, colorbar_flag=False, linewidth=4)
 
-        ax1.axvline(x=tx * grid_size[2], linestyle='--',
+        ax1.axvline(x=row['grid_x'] * grid_size[2], linestyle='--',
                     linewidth=3, color='r')
-        ax1.axhline(y=ty * grid_size[1], linestyle='--',
+        ax1.axhline(y=row['grid_y'] * grid_size[1], linestyle='--',
                     linewidth=3, color='r')
 
         ax1.set_xlim(lvxlim[0], lvxlim[1])
@@ -156,7 +156,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
         ax2.set_xlabel('East West Distance From Origin (km)' + '\n',
                        fontsize=axes_font)
         ax2.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
-        ax2.set_aspect(aspect=1.6)
+        ax2.set_aspect(aspect=1.3)
 
         # Longitude Cross Section
         ax3 = fig.add_subplot(3, 2, 4)
@@ -174,7 +174,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
         ax3.set_xlabel('North South Distance From Origin (km)',
                        fontsize=axes_font)
         ax3.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
-        ax3.set_aspect(aspect=1.6)
+        ax3.set_aspect(aspect=1.3)
 
         # Time Series Statistic
         max_field = cell['max']
