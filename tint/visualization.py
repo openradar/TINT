@@ -79,35 +79,32 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
         alt = tobj.params['GS_ALT']
     cell = tobj.tracks.xs(uid, level='uid')
 
+    nframes = len(cell)
+    print('Animating', nframes, 'frames')
+    cell_frame = 0
+
     for nframe, grid in enumerate(grids):
         if nframe not in cell.index:
             continue
+
+        print('Frame:', cell_frame)
+        cell_frame += 1
 
         row = cell.loc[nframe]
         display = pyart.graph.GridMapDisplay(grid)
 
         # Box Size
-#        tx = row['grid_x']
-#        ty = row['grid_y']
         tx = np.int(np.round(row['grid_x']))
         ty = np.int(np.round(row['grid_y']))
         lat = row['lat']
         lon = row['lon']
         box_rad_met = box_rad * 1000
-#        box_rad_mesh = box_rad_met/grid_size[1:]
         box = np.array([-1*box_rad_met, box_rad_met])
 
         lvxlim = (tx * grid_size[2]) + box
         lvylim = (ty * grid_size[1]) + box
         xlim = (grid.x['data'][tx] + box)/1000
         ylim = (grid.y['data'][ty] + box)/1000
-#        lvxlim = np.array([tx - box_size, tx + box_size]) * grid_size[1]
-#        lvylim = np.array([ty - box_size, ty + box_size]) * grid_size[2]
-#        field_shape = grid.fields[field]['data'].shape
-#        bsx = tx-field_shape[2]/2
-#        bsy = ty-field_shape[1]/2
-#        xlim = np.array([bsx - box_size, bsx + box_size]) * grid_size[1]/1000
-#        ylim = np.array([bsy - box_size, bsy + box_size]) * grid_size[2]/1000
 
         fig = plt.figure(figsize=(20, 15))
 
@@ -121,8 +118,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
                           vmin=vmin, vmax=vmax, mask_outside=False,
                           cmap=pyart.graph.cm.NWSRef,
                           ax=ax1, colorbar_flag=False, linewidth=4)
-#        display.plot_crosshairs(lon=lon, lat=lat,
-#                                line_style='k--', linewidth=3)
+
         ax1.axvline(x=tx * grid_size[2], linestyle='--',
                     linewidth=3, color='r')
         ax1.axhline(y=ty * grid_size[1], linestyle='--',
