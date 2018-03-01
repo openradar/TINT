@@ -96,6 +96,8 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
         # Box Size
         tx = np.int(np.round(row['grid_x']))
         ty = np.int(np.round(row['grid_y']))
+        tx_met = grid.x['data'][tx]
+        ty_met = grid.y['data'][ty]
         lat = row['lat']
         lon = row['lon']
         box_rad_met = box_rad * 1000
@@ -103,8 +105,8 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
 
         lvxlim = (tx * grid_size[2]) + box
         lvylim = (ty * grid_size[1]) + box
-        xlim = (grid.x['data'][tx] + box)/1000
-        ylim = (grid.y['data'][ty] + box)/1000
+        xlim = (tx_met + box)/1000
+        ylim = (ty_met + box)/1000
 
         fig = plt.figure(figsize=(20, 15))
 
@@ -119,10 +121,8 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
                           cmap=pyart.graph.cm.NWSRef,
                           ax=ax1, colorbar_flag=False, linewidth=4)
 
-        ax1.axvline(x=row['grid_x'] * grid_size[2], linestyle='--',
-                    linewidth=3, color='r')
-        ax1.axhline(y=row['grid_y'] * grid_size[1], linestyle='--',
-                    linewidth=3, color='r')
+        display.plot_crosshairs(lon=lon, lat=lat,
+                                line_style='k--', linewidth=3)
 
         ax1.set_xlim(lvxlim[0], lvxlim[1])
         ax1.set_ylim(lvylim[0], lvylim[1])
