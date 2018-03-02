@@ -221,10 +221,19 @@ def animate(tobj, grids, outfile_name, style='full', fps=1, **kwargs):
         An iterable containing all of the grids used to generate tobj
     outfile_name : str
         The name of the output file to be produced.
+    alt : float
+        The altitude to be plotted in meters.
+    vmin, vmax : float
+        Limit values for the colormap.
     arrows : bool
-        If True, draws arrow showing corrected shift for each object.
+        If True, draws arrow showing corrected shift for each object. Only used
+        in 'full' style.
     isolation : bool
-        If True, only annotates uids for isolated objects.
+        If True, only annotates uids for isolated objects. Only used in 'full'
+        style.
+    uid : str
+        The uid of the object to be viewed from a lagrangian persepective. Only
+        used when style is 'lagrangian'.
     fps : int
         Frames per second for output gif.
 
