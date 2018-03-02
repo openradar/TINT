@@ -6,6 +6,8 @@ stage, so documentation and testing are still being built. If you have any
 suggestions or wish to contribute, please open an issue. Feel free to email
 me at mhpicel@gmail.com if you need assistance.
 
+`Check out this demonstration <https://github.com/openradar/TINT/blob/master/examples/tint_demo.ipynb/>`_
+
 The development is currently led by the Data Informatics and Geophysical Retrievals (DIGR) group in the Environmental
 Sciences Group at Argonne National Laboratory. 
 
