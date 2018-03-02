@@ -10,6 +10,9 @@ import gc
 import os
 import numpy as np
 import shutil
+import tempfile
+import matplotlib as mpl
+from IPython.display import display, Image
 from matplotlib import pyplot as plt
 
 import pyart
@@ -17,10 +20,12 @@ import pyart
 from .grid_utils import get_grid_alt
 
 
-def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
-                   isolated_only=False, fps=1, basemap_res='l'):
+def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
+                basemap_res='l', isolated_only=False):
 
     grid_size = tobj.grid_size
+    if alt is None:
+        alt = tobj.params['GS_ALT']
     radar_lon = tobj.radar_info['radar_lon']
     radar_lat = tobj.radar_info['radar_lat']
     lon = np.arange(radar_lon-5, radar_lon+5, 0.5)
@@ -30,7 +35,6 @@ def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
     print('Animating', nframes, 'frames')
 
     for nframe, grid in enumerate(grids):
-        plt.clf()
         fig_grid = plt.figure(figsize=(10, 8))
         print('Frame:', nframe)
         display = pyart.graph.GridMapDisplay(grid)
@@ -38,8 +42,8 @@ def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
         display.plot_basemap(resolution=basemap_res,
                              lat_lines=lat, lon_lines=lon)
         display.plot_crosshairs(lon=radar_lon, lat=radar_lat)
-        display.plot_grid(tobj.field, level=2*get_grid_alt(grid_size, alt),
-                          vmin=-8, vmax=64, mask_outside=False,
+        display.plot_grid(tobj.field, level=get_grid_alt(grid_size, alt),
+                          vmin=vmin, vmax=vmax, mask_outside=False,
                           cmap=pyart.graph.cm.NWSRef)
 
         if nframe in tobj.tracks.index.levels[0]:
@@ -52,25 +56,160 @@ def make_animation(tobj, grids, outfile_name, tmp_dir, alt=2000,
                 ax.annotate(uid, (x, y), fontsize=20)
 
         plt.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png')
+        plt.close()
         del grid, display, ax
         gc.collect()
-    plt.close()
 
+
+def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
+                    basemap_res='l', box_rad=25):
+
+    if uid is None:
+        print("Please specify 'uid' keyword argument.")
+        return
+    stepsize = 6
+    title_font = 20
+    axes_font = 18
+    mpl.rcParams['xtick.labelsize'] = 16
+    mpl.rcParams['ytick.labelsize'] = 16
+
+    field = tobj.field
+    grid_size = tobj.grid_size
+    if alt is None:
+        alt = tobj.params['GS_ALT']
+    cell = tobj.tracks.xs(uid, level='uid')
+
+    nframes = len(cell)
+    print('Animating', nframes, 'frames')
+    cell_frame = 0
+
+    for nframe, grid in enumerate(grids):
+        if nframe not in cell.index:
+            continue
+
+        print('Frame:', cell_frame)
+        cell_frame += 1
+
+        row = cell.loc[nframe]
+        display = pyart.graph.GridMapDisplay(grid)
+
+        # Box Size
+        tx = np.int(np.round(row['grid_x']))
+        ty = np.int(np.round(row['grid_y']))
+        tx_met = grid.x['data'][tx]
+        ty_met = grid.y['data'][ty]
+        lat = row['lat']
+        lon = row['lon']
+        box_rad_met = box_rad * 1000
+        box = np.array([-1*box_rad_met, box_rad_met])
+
+        lvxlim = (tx * grid_size[2]) + box
+        lvylim = (ty * grid_size[1]) + box
+        xlim = (tx_met + box)/1000
+        ylim = (ty_met + box)/1000
+
+        fig = plt.figure(figsize=(20, 15))
+
+        fig.suptitle('Cell ' + uid + ' Scan ' + str(nframe), fontsize=22)
+        plt.axis('off')
+
+        # Lagrangian View
+        ax1 = fig.add_subplot(3, 2, (1, 3))
+
+        display.plot_grid(field, level=get_grid_alt(grid_size, alt),
+                          vmin=vmin, vmax=vmax, mask_outside=False,
+                          cmap=pyart.graph.cm.NWSRef,
+                          ax=ax1, colorbar_flag=False, linewidth=4)
+
+        display.plot_crosshairs(lon=lon, lat=lat,
+                                line_style='k--', linewidth=3)
+
+        ax1.set_xlim(lvxlim[0], lvxlim[1])
+        ax1.set_ylim(lvylim[0], lvylim[1])
+
+        ax1.set_xticks(np.arange(lvxlim[0], lvxlim[1], (stepsize * 1000)))
+        ax1.set_yticks(np.arange(lvylim[0], lvylim[1], (stepsize * 1000)))
+        ax1.set_xticklabels(np.round(np.arange(xlim[0], xlim[1], stepsize), 1))
+        ax1.set_yticklabels(np.round(np.arange(ylim[0], ylim[1], stepsize), 1))
+
+        ax1.set_title('Top-Down View', fontsize=title_font)
+        ax1.set_xlabel('East West Distance From Origin (km)' + '\n',
+                       fontsize=axes_font)
+        ax1.set_ylabel('North South Distance From Origin (km)',
+                       fontsize=axes_font)
+
+        # Latitude Cross Section
+        ax2 = fig.add_subplot(3, 2, 2)
+        display.plot_latitude_slice(field, lon=lon, lat=lat,
+                                    title_flag=False,
+                                    colorbar_flag=False, edges=False,
+                                    vmin=vmin, vmax=vmax, mask_outside=False,
+                                    cmap=pyart.graph.cm.NWSRef,
+                                    ax=ax2)
+
+        ax2.set_xlim(xlim[0], xlim[1])
+        ax2.set_xticks(np.arange(xlim[0], xlim[1], stepsize))
+        ax2.set_xticklabels(np.round((np.arange(xlim[0], xlim[1], stepsize)),
+                                     2))
+
+        ax2.set_title('Latitude Cross Section', fontsize=title_font)
+        ax2.set_xlabel('East West Distance From Origin (km)' + '\n',
+                       fontsize=axes_font)
+        ax2.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
+        ax2.set_aspect(aspect=1.3)
+
+        # Longitude Cross Section
+        ax3 = fig.add_subplot(3, 2, 4)
+        display.plot_longitude_slice('reflectivity', lon=lon, lat=lat,
+                                     title_flag=False,
+                                     colorbar_flag=False, edges=False,
+                                     vmin=vmin, vmax=vmax, mask_outside=False,
+                                     cmap=pyart.graph.cm.NWSRef,
+                                     ax=ax3)
+        ax3.set_xlim(ylim[0], ylim[1])
+        ax3.set_xticks(np.arange(ylim[0], ylim[1], stepsize))
+        ax3.set_xticklabels(np.round(np.arange(ylim[0], ylim[1], stepsize), 2))
+
+        ax3.set_title('Longitudinal Cross Section', fontsize=title_font)
+        ax3.set_xlabel('North South Distance From Origin (km)',
+                       fontsize=axes_font)
+        ax3.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
+        ax3.set_aspect(aspect=1.3)
+
+        # Time Series Statistic
+        max_field = cell['max']
+        plttime = cell['time']
+
+        # Plot
+        ax4 = fig.add_subplot(3, 2, (5, 6))
+        ax4.plot(plttime, max_field, color='b', linewidth=3)
+        ax4.axvline(x=plttime[nframe], linewidth=4, color='r')
+        ax4.set_title('Time Series', fontsize=title_font)
+        ax4.set_xlabel('Time (UTC) \n Lagrangian Viewer Time',
+                       fontsize=axes_font)
+        ax4.set_ylabel('Maximum ' + field, fontsize=axes_font)
+
+        # plot and save figure
+        fig.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png')
+        plt.close()
+        del grid, display
+        gc.collect()
+
+
+def make_mp4_from_frames(tmp_dir, dest_dir, basename, fps):
     os.chdir(tmp_dir)
     os.system(" ffmpeg -framerate " + str(fps)
               + " -pattern_type glob -i '*.png'"
               + " -movflags faststart -pix_fmt yuv420p -vf"
               + " 'scale=trunc(iw/2)*2:trunc(ih/2)*2' -y "
-              + outfile_name + ".mp4")
+              + basename + '.mp4')
     try:
-        shutil.move(outfile_name + '.mp4', '../')
+        shutil.move(basename + '.mp4', dest_dir)
     except FileNotFoundError:
         print('Make sure ffmpeg is installed properly.')
-    os.chdir('..')
 
 
-def animate(tobj, grids, outfile_name, alt=2000,
-            isolated_only=False, fps=1, basemap_res='l'):
+def animate(tobj, grids, outfile_name, style='full', fps=1, **kwargs):
     """
     Creates gif animation of tracked cells.
 
@@ -82,30 +221,64 @@ def animate(tobj, grids, outfile_name, alt=2000,
         An iterable containing all of the grids used to generate tobj
     outfile_name : str
         The name of the output file to be produced.
+    alt : float
+        The altitude to be plotted in meters.
+    vmin, vmax : float
+        Limit values for the colormap.
     arrows : bool
-        If True, draws arrow showing corrected shift for each object.
+        If True, draws arrow showing corrected shift for each object. Only used
+        in 'full' style.
     isolation : bool
-        If True, only annotates uids for isolated objects.
+        If True, only annotates uids for isolated objects. Only used in 'full'
+        style.
+    uid : str
+        The uid of the object to be viewed from a lagrangian persepective. Only
+        used when style is 'lagrangian'.
     fps : int
         Frames per second for output gif.
 
     """
 
-    if os.path.exists(outfile_name + '.mp4'):
+    styles = {'full': full_domain,
+              'lagrangian': lagrangian_view}
+    anim_func = styles[style]
+
+    dest_dir = os.path.dirname(outfile_name)
+    basename = os.path.basename(outfile_name)
+    if len(dest_dir) == 0:
+        dest_dir = os.getcwd()
+
+    if os.path.exists(basename + '.mp4'):
         print('Filename already exists.')
         return
 
-    try:
-        tmp_dir = outfile_name + '_tmp_frames'
-        os.mkdir(tmp_dir)
-    except FileExistsError:
-        print('Filename already exists.')
-        return
+    tmp_dir = tempfile.mkdtemp()
 
     try:
-        make_animation(tobj, grids, outfile_name, tmp_dir,
-                       alt, isolated_only, fps, basemap_res)
+        anim_func(tobj, grids, tmp_dir, **kwargs)
+        make_mp4_from_frames(tmp_dir, dest_dir, basename, fps)
     finally:
-        if os.getcwd().split('/')[-1] == tmp_dir:
-            os.chdir('..')
         shutil.rmtree(tmp_dir)
+
+
+def embed_mp4_as_gif(filename):
+    """ Makes a temporary gif version of an mp4 using ffmpeg for embedding in
+    IPython. Intended for use in Jupyter notebooks. """
+    if not os.path.exists(filename):
+        print('file does not exist.')
+        return
+
+    dirname = os.path.dirname(filename)
+    basename = os.path.basename(filename)
+    newfile = tempfile.NamedTemporaryFile()
+    newname = newfile.name + '.gif'
+    if len(dirname) != 0:
+        os.chdir(dirname)
+
+    os.system('ffmpeg -i ' + basename + ' ' + newname)
+
+    try:
+        with open(newname, 'rb') as f:
+            display(Image(f.read()), format='png')
+    finally:
+        os.remove(newname)
