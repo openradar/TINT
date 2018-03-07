@@ -38,11 +38,11 @@ def get_nexrad_keys(site, start=None, end=None):
     fmt = '%Y%m%d_%H%M%S'
 
     if start is None:
-        start = datetime.utcnow()
+        start = datetime.utcnow() - timedelta(hours=1)
     else:
         start = datetime.strptime(start, fmt)
     if end is None:
-        end = start + timedelta(days=1)
+        end = datetime.utcnow()
     else:
         end = datetime.strptime(end, fmt)
     if end < start:
