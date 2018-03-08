@@ -22,9 +22,10 @@ Dependencies
 
 Install
 -------
-To install TINT, first install the dependencies listed above. NOTE: Py-ART
-needs to be installed from source because TINT requires updates that are ahead
-of the current conda and pypi release.
+To install TINT, first install the dependencies listed above. We recommend
+installing Py-ART from conda forge::
+
+	conda install -c conda-forge arm_pyart
 
 Then clone::
 
