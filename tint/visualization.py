@@ -306,12 +306,14 @@ def animate(tobj, grids, outfile_name, style='full', fps=1, keep_frames=False,
 
     try:
         anim_func(tobj, grids, tmp_dir, **kwargs)
+        if len(os.listdir(tmp_dir)) == 0:
+            print('Grid generator is empty.')
+            return
         make_mp4_from_frames(tmp_dir, dest_dir, basename, fps)
         if keep_frames:
-            frame_dir = basename + '_frames'
-            shutil.move(tmp_dir, dest_dir)
+            frame_dir = os.path.join(dest_dir, basename + '_frames')
+            shutil.copytree(tmp_dir, frame_dir)
             os.chdir(dest_dir)
-            os.rename(os.path.basename(tmp_dir), frame_dir)
     finally:
         shutil.rmtree(tmp_dir)
 
