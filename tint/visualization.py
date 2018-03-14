@@ -8,6 +8,7 @@ Visualization tools for tracks objects.
 
 import gc
 import os
+import pandas as pd
 import numpy as np
 import shutil
 import tempfile
@@ -20,12 +21,55 @@ import pyart
 from .grid_utils import get_grid_alt
 
 
+class Tracer(object):
+    colors = ['m', 'r', 'lime', 'darkorange', 'k', 'b', 'darkgreen', 'yellow']
+    colors.reverse()
+
+    def __init__(self, tobj, persist):
+        self.tobj = tobj
+        self.persist = persist
+        self.color_stack = self.colors * 10
+        self.cell_color = pd.Series()
+        self.history = None
+        self.current = None
+
+    def update(self, nframe):
+        self.history = self.tobj.tracks.loc[:nframe]
+        self.current = self.tobj.tracks.loc[nframe]
+        if not self.persist:
+            dead_cells = [key for key in self.cell_color.keys()
+                          if key
+                          not in self.current.index.get_level_values('uid')]
+            self.color_stack.extend(self.cell_color[dead_cells])
+            self.cell_color.drop(dead_cells, inplace=True)
+
+    def _check_uid(self, uid):
+        if uid not in self.cell_color.keys():
+            try:
+                self.cell_color[uid] = self.color_stack.pop()
+            except IndexError:
+                self.color_stack += self.colors * 5
+                self.cell_color[uid] = self.color_stack.pop()
+
+    def plot(self, ax):
+        for uid, group in self.history.groupby(level='uid'):
+            self._check_uid(uid)
+            tracer = group[['grid_x', 'grid_y']]
+            tracer = tracer*self.tobj.grid_size[[2, 1]]
+            if self.persist or (uid in self.current.index):
+                ax.plot(tracer.grid_x, tracer.grid_y, self.cell_color[uid])
+
+
 def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
-                basemap_res='l', isolated_only=False):
+                basemap_res='l', isolated_only=False, tracers=False,
+                persist=False):
 
     grid_size = tobj.grid_size
     if alt is None:
         alt = tobj.params['GS_ALT']
+    if tracers:
+        tracer = Tracer(tobj, persist)
+
     radar_lon = tobj.radar_info['radar_lon']
     radar_lat = tobj.radar_info['radar_lat']
     lon = np.arange(radar_lon-5, radar_lon+5, 0.5)
@@ -48,6 +92,11 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
 
         if nframe in tobj.tracks.index.levels[0]:
             frame_tracks = tobj.tracks.loc[nframe]
+
+            if tracers:
+                tracer.update(nframe)
+                tracer.plot(ax)
+
             for ind, uid in enumerate(frame_tracks.index):
                 if isolated_only and not frame_tracks['isolated'].iloc[ind]:
                     continue
