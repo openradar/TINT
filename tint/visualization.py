@@ -60,11 +60,13 @@ class Tracer(object):
                 ax.plot(tracer.grid_x, tracer.grid_y, self.cell_color[uid])
 
 
-def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
+def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, cmap=None, alt=None,
                 basemap_res='l', isolated_only=False, tracers=False,
                 persist=False):
 
     grid_size = tobj.grid_size
+    if cmap is None:
+        cmap = pyart.graph.cm.NWSRef
     if alt is None:
         alt = tobj.params['GS_ALT']
     if tracers:
@@ -88,7 +90,7 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
         display.plot_crosshairs(lon=radar_lon, lat=radar_lat)
         display.plot_grid(tobj.field, level=get_grid_alt(grid_size, alt),
                           vmin=vmin, vmax=vmax, mask_outside=False,
-                          cmap=pyart.graph.cm.NWSRef)
+                          cmap=cmap)
 
         if nframe in tobj.tracks.index.levels[0]:
             frame_tracks = tobj.tracks.loc[nframe]
@@ -110,8 +112,8 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
         gc.collect()
 
 
-def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
-                    basemap_res='l', box_rad=25):
+def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
+                    cmap=None, alt=None, basemap_res='l', box_rad=25):
 
     if uid is None:
         print("Please specify 'uid' keyword argument.")
@@ -124,6 +126,9 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
 
     field = tobj.field
     grid_size = tobj.grid_size
+
+    if cmap is None:
+        cmap = pyart.graph.cm.NWSRef
     if alt is None:
         alt = tobj.params['GS_ALT']
     cell = tobj.tracks.xs(uid, level='uid')
@@ -167,7 +172,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
 
         display.plot_grid(field, level=get_grid_alt(grid_size, alt),
                           vmin=vmin, vmax=vmax, mask_outside=False,
-                          cmap=pyart.graph.cm.NWSRef,
+                          cmap=cmap,
                           ax=ax1, colorbar_flag=False, linewidth=4)
 
         display.plot_crosshairs(lon=lon, lat=lat,
@@ -193,7 +198,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
                                     title_flag=False,
                                     colorbar_flag=False, edges=False,
                                     vmin=vmin, vmax=vmax, mask_outside=False,
-                                    cmap=pyart.graph.cm.NWSRef,
+                                    cmap=cmap,
                                     ax=ax2)
 
         ax2.set_xlim(xlim[0], xlim[1])
@@ -213,7 +218,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
                                      title_flag=False,
                                      colorbar_flag=False, edges=False,
                                      vmin=vmin, vmax=vmax, mask_outside=False,
-                                     cmap=pyart.graph.cm.NWSRef,
+                                     cmap=cmap,
                                      ax=ax3)
         ax3.set_xlim(ylim[0], ylim[1])
         ax3.set_xticks(np.arange(ylim[0], ylim[1], stepsize))
