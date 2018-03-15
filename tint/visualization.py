@@ -8,6 +8,7 @@ Visualization tools for tracks objects.
 
 import gc
 import os
+import pandas as pd
 import numpy as np
 import shutil
 import tempfile
@@ -20,12 +21,57 @@ import pyart
 from .grid_utils import get_grid_alt
 
 
-def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
-                basemap_res='l', isolated_only=False):
+class Tracer(object):
+    colors = ['m', 'r', 'lime', 'darkorange', 'k', 'b', 'darkgreen', 'yellow']
+    colors.reverse()
+
+    def __init__(self, tobj, persist):
+        self.tobj = tobj
+        self.persist = persist
+        self.color_stack = self.colors * 10
+        self.cell_color = pd.Series()
+        self.history = None
+        self.current = None
+
+    def update(self, nframe):
+        self.history = self.tobj.tracks.loc[:nframe]
+        self.current = self.tobj.tracks.loc[nframe]
+        if not self.persist:
+            dead_cells = [key for key in self.cell_color.keys()
+                          if key
+                          not in self.current.index.get_level_values('uid')]
+            self.color_stack.extend(self.cell_color[dead_cells])
+            self.cell_color.drop(dead_cells, inplace=True)
+
+    def _check_uid(self, uid):
+        if uid not in self.cell_color.keys():
+            try:
+                self.cell_color[uid] = self.color_stack.pop()
+            except IndexError:
+                self.color_stack += self.colors * 5
+                self.cell_color[uid] = self.color_stack.pop()
+
+    def plot(self, ax):
+        for uid, group in self.history.groupby(level='uid'):
+            self._check_uid(uid)
+            tracer = group[['grid_x', 'grid_y']]
+            tracer = tracer*self.tobj.grid_size[[2, 1]]
+            if self.persist or (uid in self.current.index):
+                ax.plot(tracer.grid_x, tracer.grid_y, self.cell_color[uid])
+
+
+def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, cmap=None, alt=None,
+                basemap_res='l', isolated_only=False, tracers=False,
+                persist=False):
 
     grid_size = tobj.grid_size
+    if cmap is None:
+        cmap = pyart.graph.cm.NWSRef
     if alt is None:
         alt = tobj.params['GS_ALT']
+    if tracers:
+        tracer = Tracer(tobj, persist)
+
     radar_lon = tobj.radar_info['radar_lon']
     radar_lat = tobj.radar_info['radar_lat']
     lon = np.arange(radar_lon-5, radar_lon+5, 0.5)
@@ -44,10 +90,15 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
         display.plot_crosshairs(lon=radar_lon, lat=radar_lat)
         display.plot_grid(tobj.field, level=get_grid_alt(grid_size, alt),
                           vmin=vmin, vmax=vmax, mask_outside=False,
-                          cmap=pyart.graph.cm.NWSRef)
+                          cmap=cmap)
 
         if nframe in tobj.tracks.index.levels[0]:
             frame_tracks = tobj.tracks.loc[nframe]
+
+            if tracers:
+                tracer.update(nframe)
+                tracer.plot(ax)
+
             for ind, uid in enumerate(frame_tracks.index):
                 if isolated_only and not frame_tracks['isolated'].iloc[ind]:
                     continue
@@ -61,8 +112,8 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, alt=None,
         gc.collect()
 
 
-def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
-                    basemap_res='l', box_rad=25):
+def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
+                    cmap=None, alt=None, basemap_res='l', box_rad=25):
 
     if uid is None:
         print("Please specify 'uid' keyword argument.")
@@ -75,6 +126,9 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
 
     field = tobj.field
     grid_size = tobj.grid_size
+
+    if cmap is None:
+        cmap = pyart.graph.cm.NWSRef
     if alt is None:
         alt = tobj.params['GS_ALT']
     cell = tobj.tracks.xs(uid, level='uid')
@@ -118,7 +172,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
 
         display.plot_grid(field, level=get_grid_alt(grid_size, alt),
                           vmin=vmin, vmax=vmax, mask_outside=False,
-                          cmap=pyart.graph.cm.NWSRef,
+                          cmap=cmap,
                           ax=ax1, colorbar_flag=False, linewidth=4)
 
         display.plot_crosshairs(lon=lon, lat=lat,
@@ -144,7 +198,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
                                     title_flag=False,
                                     colorbar_flag=False, edges=False,
                                     vmin=vmin, vmax=vmax, mask_outside=False,
-                                    cmap=pyart.graph.cm.NWSRef,
+                                    cmap=cmap,
                                     ax=ax2)
 
         ax2.set_xlim(xlim[0], xlim[1])
@@ -164,7 +218,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64, alt=None,
                                      title_flag=False,
                                      colorbar_flag=False, edges=False,
                                      vmin=vmin, vmax=vmax, mask_outside=False,
-                                     cmap=pyart.graph.cm.NWSRef,
+                                     cmap=cmap,
                                      ax=ax3)
         ax3.set_xlim(ylim[0], ylim[1])
         ax3.set_xticks(np.arange(ylim[0], ylim[1], stepsize))
@@ -209,7 +263,8 @@ def make_mp4_from_frames(tmp_dir, dest_dir, basename, fps):
         print('Make sure ffmpeg is installed properly.')
 
 
-def animate(tobj, grids, outfile_name, style='full', fps=1, **kwargs):
+def animate(tobj, grids, outfile_name, style='full', fps=1, keep_frames=False,
+            **kwargs):
     """
     Creates gif animation of tracked cells.
 
@@ -256,7 +311,14 @@ def animate(tobj, grids, outfile_name, style='full', fps=1, **kwargs):
 
     try:
         anim_func(tobj, grids, tmp_dir, **kwargs)
+        if len(os.listdir(tmp_dir)) == 0:
+            print('Grid generator is empty.')
+            return
         make_mp4_from_frames(tmp_dir, dest_dir, basename, fps)
+        if keep_frames:
+            frame_dir = os.path.join(dest_dir, basename + '_frames')
+            shutil.copytree(tmp_dir, frame_dir)
+            os.chdir(dest_dir)
     finally:
         shutil.rmtree(tmp_dir)
 
