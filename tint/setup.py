@@ -7,7 +7,6 @@ def configuration(parent_package='', top_path=None):
     """ Configuration of TINT subpackages. """
     config = Configuration('tint', parent_package, top_path)
     config.add_subpackage('testing')
-    config.add_subpackage('tests')
     return config
 
 if __name__ == '__main__':
