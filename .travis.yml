@@ -3,10 +3,6 @@ language: python
 
 matrix:
     include:
-    - python: 2.7
-      env:
-        - PYTHON_VERSION="2.7"
-        - PYTEST_ARGS="-v"
     - python: 3.5
       env:
         - PYTHON_VERSION="3.5"
