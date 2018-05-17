@@ -64,6 +64,11 @@ doc/cdoc/build
 ./.shelf
 MANIFEST
 
+# Unit Tests #
+##############
+*.pytest_cache/
+*.cache/
+
 # Logs and databases #
 ######################
 *.log
