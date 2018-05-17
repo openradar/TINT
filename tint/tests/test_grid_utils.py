@@ -18,4 +18,4 @@ def test_parse_grid_datetime():
 
 def test_get_grid_size():
     grid_size = grid_utils.get_grid_size(grid)
-    assert(np.all(grid_size == np.array([500., 500., 500.])))
+    assert np.all(grid_size == np.array([500., 500., 500.]))
