@@ -1,24 +1,12 @@
 """ Unit tests for objects module. """
 
+from tint import objects
+from tint.testing.sample_objects import grid, record, field
+from tint.testing.sample_objects import counter, params
+from tint.testing.sample_objects import filtered, filtered_shifted, pairs
+
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_allclose
-
-import pyart
-
-from tint import objects, Cell_tracks
-from tint.helpers import Record
-from tint.testing.sample_files import SAMPLE_GRID_FILE
-from tint.grid_utils import extract_grid_data
-
-
-# Make some generic objects
-grid = pyart.io.read_grid(SAMPLE_GRID_FILE)
-record = Record(grid)
-empty_tracks = Cell_tracks()
-field = empty_tracks.field
-params = empty_tracks.params
-grid_size = record.grid_size
-raw, filtered = extract_grid_data(grid, field, grid_size, params)
 
 
 def test_get_object_prop():
@@ -36,3 +24,12 @@ def test_get_object_prop():
     assert_almost_equal(obj1_props['lon'], -93.836, 2)
     assert obj1_props['max_height'] == 4.5
     assert obj1_props['volume'] == 15.5
+
+
+def test_init_current_objects():
+    current_objects = objects.init_current_objects(filtered, filtered_shifted,
+                                                   pairs, counter)[0]
+    assert np.all(
+            current_objects['id2'] == np.array([1, 2, 3, 5, 0, 6,
+                                                7, 8, 9, 10, 11])
+            )
