@@ -181,8 +181,8 @@ def get_disparity_all(obj_found, image2, search_box, obj1_extent):
 
 
 def save_obj_match(obj_id1, obj_found, disparity, obj_match, params):
-    """ Saves disparity values in obj_match matrix. If disparity is greater than
-    MAX_DISPARITY, saves a large number. """
+    """ Saves disparity values in obj_match matrix. If disparity is greater
+    than MAX_DISPARITY, saves a large number. """
     disparity[disparity > params['MAX_DISPARITY']] = LARGE_NUM
     if np.max(obj_found) > 0:
         obj_found = obj_found[obj_found > 0]
@@ -192,8 +192,8 @@ def save_obj_match(obj_id1, obj_found, disparity, obj_match, params):
     return obj_match
 
 
-def locate_allObjects(image1, image2, global_shift, current_objects, record,
-                      params):
+def locate_all_objects(image1, image2, global_shift, current_objects, record,
+                       params):
     """ Matches all the objects in image1 to objects in image2. This is the
     main function called on a pair of images. """
     nobj1 = np.max(image1)
@@ -255,11 +255,11 @@ def get_pairs(image1, image2, global_shift, current_objects, record, params):
         zero_pairs = np.zeros(nobj1)
         return zero_pairs
 
-    obj_match = locate_allObjects(image1,
-                                  image2,
-                                  global_shift,
-                                  current_objects,
-                                  record,
-                                  params)
+    obj_match = locate_all_objects(image1,
+                                   image2,
+                                   global_shift,
+                                   current_objects,
+                                   record,
+                                   params)
     pairs = match_pairs(obj_match, params)
     return pairs
