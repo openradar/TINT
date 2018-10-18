@@ -74,8 +74,8 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, cmap=None, alt=None,
 
     radar_lon = tobj.radar_info['radar_lon']
     radar_lat = tobj.radar_info['radar_lat']
-    lon = np.arange(radar_lon-5, radar_lon+5, 0.5)
-    lat = np.arange(radar_lat-5, radar_lat+5, 0.5)
+    lon = np.arange(round(radar_lon-5,2),round(radar_lon+5,2), 1)
+    lat = np.arange(round(radar_lat-5,2),round(radar_lat+5,2), 1)
 
     nframes = tobj.tracks.index.levels[0].max() + 1
     print('Animating', nframes, 'frames')
@@ -90,7 +90,7 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, cmap=None, alt=None,
         display.plot_crosshairs(lon=radar_lon, lat=radar_lat)
         display.plot_grid(tobj.field, level=get_grid_alt(grid_size, alt),
                           vmin=vmin, vmax=vmax, mask_outside=False,
-                          cmap=cmap)
+                          cmap=cmap, edges=False)
 
         if nframe in tobj.tracks.index.levels[0]:
             frame_tracks = tobj.tracks.loc[nframe]
@@ -106,7 +106,8 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, cmap=None, alt=None,
                 y = frame_tracks['grid_y'].iloc[ind]*grid_size[1]
                 ax.annotate(uid, (x, y), fontsize=20)
 
-        plt.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png')
+        plt.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png',
+                    bbox_inches = 'tight', dpi = 300)
         plt.close()
         del grid, display, ax
         gc.collect()
