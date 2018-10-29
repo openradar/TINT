@@ -215,7 +215,7 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
 
         # Longitude Cross Section
         ax3 = fig.add_subplot(3, 2, 4)
-        display.plot_longitude_slice('reflectivity', lon=lon, lat=lat,
+        display.plot_longitude_slice(field, lon=lon, lat=lat,
                                      title_flag=False,
                                      colorbar_flag=False, edges=False,
                                      vmin=vmin, vmax=vmax, mask_outside=False,
