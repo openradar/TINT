@@ -57,19 +57,21 @@ class Tracer(object):
     def plot(self, ax):
         for uid, group in self.history.groupby(level='uid'):
             self._check_uid(uid)
-            tracer = group[['grid_x', 'grid_y']]
-            tracer = tracer*self.tobj.grid_size[[2, 1]]
+            tracer = group[['lon', 'lat']]
             if self.persist or (uid in self.current.index):
-                ax.plot(tracer.grid_x, tracer.grid_y, self.cell_color[uid])
+                ax.plot(tracer.lon, tracer.lat, self.cell_color[uid])
 
 def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64,
                 cmap=None, alt=None, isolated_only=False,
-                tracers=False, persist=False, projection=None):
+                tracers=False, persist=False,
+                projection=None, **kwargs):
     grid_size = tobj.grid_size
     if cmap is None:
         cmap = pyart.graph.cm_colorblind.HomeyerRainbow
     if alt is None:
         alt = tobj.params['GS_ALT']
+    if projection is None:
+        projection=ccrs.PlateCarree()
     if tracers:
         tracer = Tracer(tobj, persist)
 
@@ -85,11 +87,12 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64,
         fig_grid = plt.figure(figsize=(10, 8))
         print('Frame:', nframe)
         display = pyart.graph.GridMapDisplay(grid)
-        ax = fig_grid.add_subplot(111)
+        ax = fig_grid.add_subplot(111, projection=projection)
+        transform = projection._as_mpl_transform(ax)
         display.plot_crosshairs(lon=radar_lon, lat=radar_lat)
         display.plot_grid(tobj.field, level=get_grid_alt(grid_size, alt),
                           vmin=vmin, vmax=vmax, mask_outside=False,
-                          cmap=cmap, projection=projection, ax=ax)
+                          cmap=cmap, transform=projection, ax=ax, **kwargs)
 
         if nframe in tobj.tracks.index.levels[0]:
             frame_tracks = tobj.tracks.loc[nframe]
@@ -101,26 +104,27 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64,
             for ind, uid in enumerate(frame_tracks.index):
                 if isolated_only and not frame_tracks['isolated'].iloc[ind]:
                     continue
-                x = frame_tracks['grid_x'].iloc[ind]*grid_size[2]
-                y = frame_tracks['grid_y'].iloc[ind]*grid_size[1]
-                ax.annotate(uid, (x, y), fontsize=20)
+                x = frame_tracks['lon'].iloc[ind]
+                y = frame_tracks['lat'].iloc[ind]
+                ax.text(x, y, uid, transform=projection, fontsize=20)
+
 
         plt.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png',
-                    bbox_inches = 'tight', dpi = 300)
+                    bbox_inches = 'tight', dpi=300)
         plt.close()
         del grid, display, ax
         gc.collect()
 
 
 def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
-                    cmap=None, alt=None, box_rad=25, projection=None):
+                    cmap=None, alt=None, box_rad=.1, projection=None):
 
     if uid is None:
         print("Please specify 'uid' keyword argument.")
         return
-    stepsize = 6
-    title_font = 20
-    axes_font = 18
+    stepsize = 0.05
+    title_font = 18
+    axes_font = 16
     mpl.rcParams['xtick.labelsize'] = 16
     mpl.rcParams['ytick.labelsize'] = 16
 
@@ -131,6 +135,9 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
         cmap = pyart.graph.cm_colorblind.HomeyerRainbow
     if alt is None:
         alt = tobj.params['GS_ALT']
+    if projection is None:
+        projection = ccrs.PlateCarree()
+        
     cell = tobj.tracks.xs(uid, level='uid')
 
     nframes = len(cell)
@@ -154,13 +161,14 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
         ty_met = grid.y['data'][ty]
         lat = row['lat']
         lon = row['lon']
-        box_rad_met = box_rad * 1000
+        box_rad_met = box_rad 
         box = np.array([-1*box_rad_met, box_rad_met])
+        
 
-        lvxlim = (tx * grid_size[2]) + box
-        lvylim = (ty * grid_size[1]) + box
-        xlim = (tx_met + box)/1000
-        ylim = (ty_met + box)/1000
+        lvxlim = (lon) + box
+        lvylim = (lat) + box
+        xlim = (tx_met + np.array([-25000, 25000]))/1000
+        ylim = (ty_met + np.array([-25000, 25000]))/1000
 
         fig = plt.figure(figsize=(20, 15))
 
@@ -176,20 +184,18 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
                           ax=ax, projection=projection)
 
         display.plot_crosshairs(lon=lon, lat=lat, linestyle='--', 
-                                color='r', linewidth=3, ax=ax)
+                                color='k', linewidth=3, ax=ax)
 
         ax.set_xlim(lvxlim[0], lvxlim[1])
         ax.set_ylim(lvylim[0], lvylim[1])
 
-        ax.set_xticks(np.arange(lvxlim[0], lvxlim[1], (stepsize * 1000)))
-        ax.set_yticks(np.arange(lvylim[0], lvylim[1], (stepsize * 1000)))
-        ax.set_xticklabels(np.round(np.arange(xlim[0], xlim[1], stepsize), 1))
-        ax.set_yticklabels(np.round(np.arange(ylim[0], ylim[1], stepsize), 1))
+        ax.set_xticks(np.arange(lvxlim[0], lvxlim[1], stepsize))
+        ax.set_yticks(np.arange(lvylim[0], lvylim[1], stepsize))
 
         ax.set_title('Top-Down View', fontsize=title_font)
-        ax.set_xlabel('East West Distance From Origin (km)' + '\n',
+        ax.set_xlabel('Longitude of grid cell center\n [degree_E]',
                        fontsize=axes_font)
-        ax.set_ylabel('North South Distance From Origin (km)',
+        ax.set_ylabel('Latitude of grid cell center\n [degree_N]',
                        fontsize=axes_font)
 
         # Latitude Cross Section
@@ -202,8 +208,8 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
                                     ax=ax)
 
         ax.set_xlim(xlim[0], xlim[1])
-        ax.set_xticks(np.arange(xlim[0], xlim[1], stepsize))
-        ax.set_xticklabels(np.round((np.arange(xlim[0], xlim[1], stepsize)),
+        ax.set_xticks(np.arange(xlim[0], xlim[1], 6))
+        ax.set_xticklabels(np.round((np.arange(xlim[0], xlim[1], 6)),
                                      2))
 
         ax.set_title('Latitude Cross Section', fontsize=title_font)
@@ -221,8 +227,8 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
                                      cmap=cmap,
                                      ax=ax)
         ax.set_xlim(ylim[0], ylim[1])
-        ax.set_xticks(np.arange(ylim[0], ylim[1], stepsize))
-        ax.set_xticklabels(np.round(np.arange(ylim[0], ylim[1], stepsize), 2))
+        ax.set_xticks(np.arange(ylim[0], ylim[1], 6))
+        ax.set_xticklabels(np.round(np.arange(ylim[0], ylim[1], 6), 2))
 
         ax.set_title('Longitudinal Cross Section', fontsize=title_font)
         ax.set_xlabel('North South Distance From Origin (km)',
