@@ -5,6 +5,8 @@ tint.visualization
 Visualization tools for tracks objects.
 
 """
+import warnings
+warnings.filterwarnings('ignore')
 
 import gc
 import os
@@ -15,6 +17,7 @@ import tempfile
 import matplotlib as mpl
 from IPython.display import display, Image
 from matplotlib import pyplot as plt
+import cartopy.crs as ccrs
 
 import pyart
 
@@ -54,21 +57,21 @@ class Tracer(object):
     def plot(self, ax):
         for uid, group in self.history.groupby(level='uid'):
             self._check_uid(uid)
-            tracer = group[['grid_x', 'grid_y']]
-            tracer = tracer*self.tobj.grid_size[[2, 1]]
+            tracer = group[['lon', 'lat']]
             if self.persist or (uid in self.current.index):
-                ax.plot(tracer.grid_x, tracer.grid_y, self.cell_color[uid])
+                ax.plot(tracer.lon, tracer.lat, self.cell_color[uid])
 
-
-def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, cmap=None, alt=None,
-                basemap_res='l', isolated_only=False, tracers=False,
-                persist=False):
-
+def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64,
+                cmap=None, alt=None, isolated_only=False,
+                tracers=False, persist=False,
+                projection=None, **kwargs):
     grid_size = tobj.grid_size
     if cmap is None:
-        cmap = pyart.graph.cm.NWSRef
+        cmap = pyart.graph.cm_colorblind.HomeyerRainbow
     if alt is None:
         alt = tobj.params['GS_ALT']
+    if projection is None:
+        projection=ccrs.PlateCarree()
     if tracers:
         tracer = Tracer(tobj, persist)
 
@@ -84,13 +87,12 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, cmap=None, alt=None,
         fig_grid = plt.figure(figsize=(10, 8))
         print('Frame:', nframe)
         display = pyart.graph.GridMapDisplay(grid)
-        ax = fig_grid.add_subplot(111)
-        display.plot_basemap(resolution=basemap_res,
-                             lat_lines=lat, lon_lines=lon)
+        ax = fig_grid.add_subplot(111, projection=projection)
+        transform = projection._as_mpl_transform(ax)
         display.plot_crosshairs(lon=radar_lon, lat=radar_lat)
         display.plot_grid(tobj.field, level=get_grid_alt(grid_size, alt),
                           vmin=vmin, vmax=vmax, mask_outside=False,
-                          cmap=cmap, edges=False)
+                          cmap=cmap, transform=projection, ax=ax, **kwargs)
 
         if nframe in tobj.tracks.index.levels[0]:
             frame_tracks = tobj.tracks.loc[nframe]
@@ -102,26 +104,27 @@ def full_domain(tobj, grids, tmp_dir, vmin=-8, vmax=64, cmap=None, alt=None,
             for ind, uid in enumerate(frame_tracks.index):
                 if isolated_only and not frame_tracks['isolated'].iloc[ind]:
                     continue
-                x = frame_tracks['grid_x'].iloc[ind]*grid_size[2]
-                y = frame_tracks['grid_y'].iloc[ind]*grid_size[1]
-                ax.annotate(uid, (x, y), fontsize=20)
+                x = frame_tracks['lon'].iloc[ind]
+                y = frame_tracks['lat'].iloc[ind]
+                ax.text(x, y, uid, transform=projection, fontsize=20)
+
 
         plt.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png',
-                    bbox_inches = 'tight', dpi = 300)
+                    bbox_inches = 'tight', dpi=300)
         plt.close()
         del grid, display, ax
         gc.collect()
 
 
 def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
-                    cmap=None, alt=None, basemap_res='l', box_rad=25):
+                    cmap=None, alt=None, box_rad=.1, projection=None):
 
     if uid is None:
         print("Please specify 'uid' keyword argument.")
         return
-    stepsize = 6
-    title_font = 20
-    axes_font = 18
+    stepsize = 0.05
+    title_font = 18
+    axes_font = 16
     mpl.rcParams['xtick.labelsize'] = 16
     mpl.rcParams['ytick.labelsize'] = 16
 
@@ -129,9 +132,12 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
     grid_size = tobj.grid_size
 
     if cmap is None:
-        cmap = pyart.graph.cm.NWSRef
+        cmap = pyart.graph.cm_colorblind.HomeyerRainbow
     if alt is None:
         alt = tobj.params['GS_ALT']
+    if projection is None:
+        projection = ccrs.PlateCarree()
+        
     cell = tobj.tracks.xs(uid, level='uid')
 
     nframes = len(cell)
@@ -155,13 +161,14 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
         ty_met = grid.y['data'][ty]
         lat = row['lat']
         lon = row['lon']
-        box_rad_met = box_rad * 1000
+        box_rad_met = box_rad 
         box = np.array([-1*box_rad_met, box_rad_met])
+        
 
-        lvxlim = (tx * grid_size[2]) + box
-        lvylim = (ty * grid_size[1]) + box
-        xlim = (tx_met + box)/1000
-        ylim = (ty_met + box)/1000
+        lvxlim = (lon) + box
+        lvylim = (lat) + box
+        xlim = (tx_met + np.array([-25000, 25000]))/1000
+        ylim = (ty_met + np.array([-25000, 25000]))/1000
 
         fig = plt.figure(figsize=(20, 15))
 
@@ -169,80 +176,78 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
         plt.axis('off')
 
         # Lagrangian View
-        ax1 = fig.add_subplot(3, 2, (1, 3))
+        ax = fig.add_subplot(3, 2, (1, 3), projection=projection)
 
         display.plot_grid(field, level=get_grid_alt(grid_size, alt),
                           vmin=vmin, vmax=vmax, mask_outside=False,
-                          cmap=cmap,
-                          ax=ax1, colorbar_flag=False, linewidth=4)
+                          cmap=cmap, colorbar_flag=False,
+                          ax=ax, projection=projection)
 
-        display.plot_crosshairs(lon=lon, lat=lat,
-                                line_style='k--', linewidth=3)
+        display.plot_crosshairs(lon=lon, lat=lat, linestyle='--', 
+                                color='k', linewidth=3, ax=ax)
 
-        ax1.set_xlim(lvxlim[0], lvxlim[1])
-        ax1.set_ylim(lvylim[0], lvylim[1])
+        ax.set_xlim(lvxlim[0], lvxlim[1])
+        ax.set_ylim(lvylim[0], lvylim[1])
 
-        ax1.set_xticks(np.arange(lvxlim[0], lvxlim[1], (stepsize * 1000)))
-        ax1.set_yticks(np.arange(lvylim[0], lvylim[1], (stepsize * 1000)))
-        ax1.set_xticklabels(np.round(np.arange(xlim[0], xlim[1], stepsize), 1))
-        ax1.set_yticklabels(np.round(np.arange(ylim[0], ylim[1], stepsize), 1))
+        ax.set_xticks(np.arange(lvxlim[0], lvxlim[1], stepsize))
+        ax.set_yticks(np.arange(lvylim[0], lvylim[1], stepsize))
 
-        ax1.set_title('Top-Down View', fontsize=title_font)
-        ax1.set_xlabel('East West Distance From Origin (km)' + '\n',
+        ax.set_title('Top-Down View', fontsize=title_font)
+        ax.set_xlabel('Longitude of grid cell center\n [degree_E]',
                        fontsize=axes_font)
-        ax1.set_ylabel('North South Distance From Origin (km)',
+        ax.set_ylabel('Latitude of grid cell center\n [degree_N]',
                        fontsize=axes_font)
 
         # Latitude Cross Section
-        ax2 = fig.add_subplot(3, 2, 2)
+        ax = fig.add_subplot(3, 2, 2)
         display.plot_latitude_slice(field, lon=lon, lat=lat,
                                     title_flag=False,
                                     colorbar_flag=False, edges=False,
                                     vmin=vmin, vmax=vmax, mask_outside=False,
                                     cmap=cmap,
-                                    ax=ax2)
+                                    ax=ax)
 
-        ax2.set_xlim(xlim[0], xlim[1])
-        ax2.set_xticks(np.arange(xlim[0], xlim[1], stepsize))
-        ax2.set_xticklabels(np.round((np.arange(xlim[0], xlim[1], stepsize)),
+        ax.set_xlim(xlim[0], xlim[1])
+        ax.set_xticks(np.arange(xlim[0], xlim[1], 6))
+        ax.set_xticklabels(np.round((np.arange(xlim[0], xlim[1], 6)),
                                      2))
 
-        ax2.set_title('Latitude Cross Section', fontsize=title_font)
-        ax2.set_xlabel('East West Distance From Origin (km)' + '\n',
+        ax.set_title('Latitude Cross Section', fontsize=title_font)
+        ax.set_xlabel('East West Distance From Origin (km)' + '\n',
                        fontsize=axes_font)
-        ax2.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
-        ax2.set_aspect(aspect=1.3)
+        ax.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
+        ax.set_aspect(aspect=1.3)
 
         # Longitude Cross Section
-        ax3 = fig.add_subplot(3, 2, 4)
+        ax = fig.add_subplot(3, 2, 4)
         display.plot_longitude_slice(field, lon=lon, lat=lat,
                                      title_flag=False,
                                      colorbar_flag=False, edges=False,
                                      vmin=vmin, vmax=vmax, mask_outside=False,
                                      cmap=cmap,
-                                     ax=ax3)
-        ax3.set_xlim(ylim[0], ylim[1])
-        ax3.set_xticks(np.arange(ylim[0], ylim[1], stepsize))
-        ax3.set_xticklabels(np.round(np.arange(ylim[0], ylim[1], stepsize), 2))
+                                     ax=ax)
+        ax.set_xlim(ylim[0], ylim[1])
+        ax.set_xticks(np.arange(ylim[0], ylim[1], 6))
+        ax.set_xticklabels(np.round(np.arange(ylim[0], ylim[1], 6), 2))
 
-        ax3.set_title('Longitudinal Cross Section', fontsize=title_font)
-        ax3.set_xlabel('North South Distance From Origin (km)',
+        ax.set_title('Longitudinal Cross Section', fontsize=title_font)
+        ax.set_xlabel('North South Distance From Origin (km)',
                        fontsize=axes_font)
-        ax3.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
-        ax3.set_aspect(aspect=1.3)
+        ax.set_ylabel('Distance Above Origin (km)', fontsize=axes_font)
+        ax.set_aspect(aspect=1.3)
 
         # Time Series Statistic
         max_field = cell['max']
         plttime = cell['time']
 
         # Plot
-        ax4 = fig.add_subplot(3, 2, (5, 6))
-        ax4.plot(plttime, max_field, color='b', linewidth=3)
-        ax4.axvline(x=plttime[nframe], linewidth=4, color='r')
-        ax4.set_title('Time Series', fontsize=title_font)
-        ax4.set_xlabel('Time (UTC) \n Lagrangian Viewer Time',
+        ax = fig.add_subplot(3, 2, (5, 6))
+        ax.plot(plttime, max_field, color='b', linewidth=3)
+        ax.axvline(x=plttime[nframe], linewidth=4, color='r')
+        ax.set_title('Time Series', fontsize=title_font)
+        ax.set_xlabel('Time (UTC) \n Lagrangian Viewer Time',
                        fontsize=axes_font)
-        ax4.set_ylabel('Maximum ' + field, fontsize=axes_font)
+        ax.set_ylabel('Maximum ' + field, fontsize=axes_font)
 
         # plot and save figure
         fig.savefig(tmp_dir + '/frame_' + str(nframe).zfill(3) + '.png')

@@ -17,6 +17,7 @@ Dependencies
 - Pandas
 - SciPy
 - matplotlib
+- cartopy
 - `Py-ART <http://arm-doe.github.io/pyart/>`_
 - `ffmpeg <https://www.ffmpeg.org/>`_
 

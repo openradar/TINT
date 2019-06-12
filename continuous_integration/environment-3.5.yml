@@ -10,3 +10,4 @@ dependencies:
   - pandas
   - scipy
   - ipython
+  - cartopy
