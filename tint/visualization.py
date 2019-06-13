@@ -270,7 +270,7 @@ def make_mp4_from_frames(tmp_dir, dest_dir, basename, fps):
 
 
 def animate(tobj, grids, outfile_name, style='full', fps=1, keep_frames=False,
-            **kwargs):
+            overwrite=False, **kwargs):
     """
     Creates gif animation of tracked cells.
 
@@ -279,7 +279,7 @@ def animate(tobj, grids, outfile_name, style='full', fps=1, keep_frames=False,
     tobj : Cell_tracks
         The Cell_tracks object to be visualized.
     grids : iterable
-        An iterable containing all of the grids used to generate tobj
+        An iterable containing all of the grids used to generate tobj.
     outfile_name : str
         The name of the output file to be produced.
     alt : float
@@ -297,6 +297,9 @@ def animate(tobj, grids, outfile_name, style='full', fps=1, keep_frames=False,
         used when style is 'lagrangian'.
     fps : int
         Frames per second for output gif.
+    overwrite : bool
+        If true, will overwrite existing mp4 if one already exists.
+        False, won't overwrite if file already exists.
 
     """
 
@@ -309,7 +312,7 @@ def animate(tobj, grids, outfile_name, style='full', fps=1, keep_frames=False,
     if len(dest_dir) == 0:
         dest_dir = os.getcwd()
 
-    if os.path.exists(basename + '.mp4'):
+    if os.path.exists(basename + '.mp4') and overwrite is False:
         print('Filename already exists.')
         return
 
