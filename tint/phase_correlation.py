@@ -1,10 +1,8 @@
 """
 tint.phase_correlation
 ======================
-
 Functions for performing phase correlation. Used to predict cell movement
 between scans.
-
 """
 
 import numpy as np
@@ -50,8 +48,14 @@ def fft_flowvectors(im1, im2, global_shift=False):
     sigma = (1/8) * min(crosscov.shape)
     cov_smooth = ndimage.filters.gaussian_filter(crosscov, sigma)
     dims = np.array(im1.shape)
+
     pshift = np.argwhere(cov_smooth == np.max(cov_smooth))[0]
-    pshift = (pshift+1) - np.round(dims/2, 0)
+    
+    rs = np.ceil(dims[0]/2).astype('int')
+    cs = np.ceil(dims[1]/2).astype('int')
+
+    # Calculate shift relative to center - see fft_shift.
+    pshift = pshift - (dims - [rs, cs])
     return pshift
 
 
@@ -72,15 +76,18 @@ def fft_shift(fft_mat):
     component is in the middle of the matrix. Taken from stackoverflow Que.
     30630632. """
     if type(fft_mat) is np.ndarray:
-        rd2 = np.int(fft_mat.shape[0]/2)
-        cd2 = np.int(fft_mat.shape[1]/2)
-        quad1 = fft_mat[:rd2, :cd2]
-        quad2 = fft_mat[:rd2, cd2:]
-        quad3 = fft_mat[rd2:, cd2:]
-        quad4 = fft_mat[rd2:, :cd2]
+        rs = np.ceil(fft_mat.shape[0]/2).astype('int')
+        cs = np.ceil(fft_mat.shape[1]/2).astype('int')
+        quad1 = fft_mat[:rs, :cs]
+        quad2 = fft_mat[:rs, cs:]
+        quad3 = fft_mat[rs:, cs:]
+        quad4 = fft_mat[rs:, :cs]
         centered_t = np.concatenate((quad4, quad1), axis=0)
         centered_b = np.concatenate((quad3, quad2), axis=0)
         centered = np.concatenate((centered_b, centered_t), axis=1)
+        # Thus centered is formed by shifting the entries of fft_mat
+        # up/left by [rs, cs] indices, or equivalently down/right by
+        # (fft_mat.shape - [rs, cs]) indices, with edges wrapping. 
         return centered
     else:
         print('input to fft_shift() should be a matrix')
