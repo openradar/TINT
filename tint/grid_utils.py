@@ -19,7 +19,8 @@ def parse_grid_datetime(grid_obj):
     dt_string = grid_obj.time['units'].split(' ')[-1]
     date = dt_string[:10]
     time = dt_string[11:19]
-    dt = datetime.datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M:%S')
+    dt0 = datetime.datetime.strptime(date + ' ' + time, '%Y-%m-%d %H:%M:%S')
+    dt = datetime.timedelta(seconds=grid_obj.time['data'][0]) + dt0
     return dt
 
 
