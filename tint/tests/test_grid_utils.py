@@ -10,7 +10,7 @@ from tint.testing.sample_objects import params, grid_size
 
 def test_parse_grid_datetime():
     dt = grid_utils.parse_grid_datetime(grid)
-    assert(dt == datetime(2015, 7, 10, 18, 34, 6))
+    assert(dt == datetime(2015, 7, 10, 18, 34, 6, 102000))
 
 
 def test_get_grid_size():
