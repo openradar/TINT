@@ -88,5 +88,4 @@ def get_nexrad_keys(site, start=None, end=None):
     key_dts = zip(keys, key_dts)
     keys = [key for key, dt in key_dts if dt > start and dt < end]
     print('Found', len(keys), 'keys.')
-    print(keys)
     return keys
