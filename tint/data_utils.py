@@ -70,15 +70,23 @@ def get_nexrad_keys(site, start=None, end=None):
         print('Found 0 files.')
         return
 
+    # Key ealier for keys before 'V06'
     if '.gz>' in str(keys[0]):
         key_fmt = site + '%Y%m%d_%H%M%S_V06.gz>'
+        key_fmt_earlier = site + '%Y%m%d_%H%M%S.gz>'
     else:
         key_fmt = site + '%Y%m%d_%H%M%S_V06>'
+        key_fmt_earlier = site + '%Y%m%d_%H%M%S>'
 
-    key_dts = [datetime.strptime(str(key).split('/')[-1], key_fmt)
-               for key in keys]
+    key_dts = []
+    for key in keys:
+        try:
+            key_dts.append(datetime.strptime(str(key).split('/')[-1], key_fmt))
+        except ValueError:
+            key_dts.append(
+                datetime.strptime(str(key).split('/')[-1], key_fmt_earlier))
     key_dts = zip(keys, key_dts)
     keys = [key for key, dt in key_dts if dt > start and dt < end]
     print('Found', len(keys), 'keys.')
-
+    print(keys)
     return keys
