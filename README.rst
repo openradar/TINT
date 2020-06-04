@@ -8,16 +8,17 @@ me at mhpicel@gmail.com if you need assistance.
 
 `Check out this demonstration <https://github.com/openradar/TINT/blob/master/examples/tint_demo.ipynb/>`_
 
-The development is currently led by the Data Informatics and Geophysical Retrievals (DIGR) group in the Environmental
-Sciences Group at Argonne National Laboratory. 
+The development is currently led by the Data Informatics and Geophysical
+Retrievals (DIGR) group in the Environmental Sciences Group at Argonne
+National Laboratory. 
 
 Dependencies
 ------------
-- NumPy
-- Pandas
-- SciPy
-- matplotlib
-- cartopy
+- `NumPy <https://numpy.org/>`_
+- `Pandas <https://pandas.pydata.org/>`_
+- `SciPy <https://www.scipy.org/>`_
+- `matplotlib <https://matplotlib.org/>`_
+- `cartopy <https://scitools.org.uk/cartopy/docs/latest/>`_
 - `Py-ART <http://arm-doe.github.io/pyart/>`_
 - `ffmpeg <https://www.ffmpeg.org/>`_
 
@@ -35,7 +36,18 @@ Then clone::
 then::
 
 	cd TINT
-	python setup.py install
+	pip install -e .
+
+Citing
+------
+Currently for citing please cite:
+
+Fridlind, A. M., van Lier-Walqui, M., Collis, S., Giangrande, S. E., Jackson,
+R. C., Li, X., Matsui, T., Orville, R., Picel, M. H., Rosenfeld, D., Ryzhkov,
+A., Weitz, R., and Zhang, P.: Use of polarimetric radar measurements to
+constrain simulated convective cell evolution: a pilot study with Lagrangian
+tracking, Atmos. Meas. Tech., 12, 2979–3000,
+https://doi.org/10.5194/amt-12-2979-2019, 2019.
 
 Acknowledgements
 ----------------
