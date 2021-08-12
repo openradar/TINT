@@ -64,7 +64,7 @@ def get_nexrad_keys(site, start=None, end=None):
 
     keys = [key for date_key in date_keys
             for key in list(bucket.list(date_key))
-            if '.tar' not in str(key)]
+            if (('.tar' not in str(key)) and ('_MDM' not in str(key)))]
 
     if len(keys) == 0:
         print('Found 0 files.')
