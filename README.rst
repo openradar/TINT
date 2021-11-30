@@ -70,3 +70,5 @@ Technol., 10, 785–797, doi: 10.1175/1520-0426(1993)010<0785:TTITAA>2.0.CO;2.
 Leese, J.A., C.S. Novak, and B.B. Clark, 1971: An Automated Technique for Obtaining Cloud Motion from Geosynchronous
 Satellite Data Using Cross Correlation. J. Appl. Meteor., 10, 118–132, doi: 10.1175/1520-0450(1971)010<0118:AATFOC>2.0.CO;2.
 
+Raut, B. A., Jackson, R., Picel, M., Collis, S. M., Bergemann, M., & Jakob, C. (2021). An Adaptive Tracking Algorithm for Convection in Simulated and Remote Sensing Data. Journal of Applied Meteorology and Climatology, 60(4), 513-526.
+
