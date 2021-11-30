@@ -42,12 +42,9 @@ Citing
 ------
 Currently for citing please cite:
 
-Fridlind, A. M., van Lier-Walqui, M., Collis, S., Giangrande, S. E., Jackson,
-R. C., Li, X., Matsui, T., Orville, R., Picel, M. H., Rosenfeld, D., Ryzhkov,
-A., Weitz, R., and Zhang, P.: Use of polarimetric radar measurements to
-constrain simulated convective cell evolution: a pilot study with Lagrangian
-tracking, Atmos. Meas. Tech., 12, 2979–3000,
-https://doi.org/10.5194/amt-12-2979-2019, 2019.
+Raut, B. A., Jackson, R., Picel, M., Collis, S. M., Bergemann, M., & Jakob, C.
+(2021). An Adaptive Tracking Algorithm for Convection in Simulated and Remote
+Sensing Data. Journal of Applied Meteorology and Climatology, 60(4), 513-526.
 
 Acknowledgements
 ----------------
@@ -67,8 +64,12 @@ Dixon, M. and G. Wiener, 1993: TITAN: Thunderstorm Identification, Tracking,
 Analysis, and Nowcasting—A Radar-based Methodology. J. Atmos. Oceanic
 Technol., 10, 785–797, doi: 10.1175/1520-0426(1993)010<0785:TTITAA>2.0.CO;2.
 
+Fridlind, A. M., van Lier-Walqui, M., Collis, S., Giangrande, S. E., Jackson,
+R. C., Li, X., Matsui, T., Orville, R., Picel, M. H., Rosenfeld, D., Ryzhkov,
+A., Weitz, R., and Zhang, P.: Use of polarimetric radar measurements to
+constrain simulated convective cell evolution: a pilot study with Lagrangian
+tracking, Atmos. Meas. Tech., 12, 2979–3000,
+https://doi.org/10.5194/amt-12-2979-2019, 2019.
+
 Leese, J.A., C.S. Novak, and B.B. Clark, 1971: An Automated Technique for Obtaining Cloud Motion from Geosynchronous
 Satellite Data Using Cross Correlation. J. Appl. Meteor., 10, 118–132, doi: 10.1175/1520-0450(1971)010<0118:AATFOC>2.0.CO;2.
-
-Raut, B. A., Jackson, R., Picel, M., Collis, S. M., Bergemann, M., & Jakob, C. (2021). An Adaptive Tracking Algorithm for Convection in Simulated and Remote Sensing Data. Journal of Applied Meteorology and Climatology, 60(4), 513-526.
-
