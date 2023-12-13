@@ -19,10 +19,10 @@ def get_ambient_flow(obj_extent, img1, img2, params, grid_size):
     row_ub = obj_extent['obj_center'][0] + obj_extent['obj_radius'] + margin_r
     col_lb = obj_extent['obj_center'][1] - obj_extent['obj_radius'] - margin_c
     col_ub = obj_extent['obj_center'][1] + obj_extent['obj_radius'] + margin_c
-    row_lb = np.int(row_lb)
-    row_ub = np.int(row_ub)
-    col_lb = np.int(col_lb)
-    col_ub = np.int(col_ub)
+    row_lb = np.int64(row_lb)
+    row_ub = np.int64(row_ub)
+    col_lb = np.int64(col_lb)
+    col_ub = np.int64(col_ub)
 
     dims = img1.shape
 

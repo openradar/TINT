@@ -127,10 +127,10 @@ def predict_search_extent(obj1_extent, shift, params, grid_size):
     x2 = shifted_center[0] + search_radius_r + 1
     y1 = shifted_center[1] - search_radius_c
     y2 = shifted_center[1] + search_radius_c + 1
-    x1 = np.int(x1)
-    x2 = np.int(x2)
-    y1 = np.int(y1)
-    y2 = np.int(y2)
+    x1 = np.int64(x1)
+    x2 = np.int64(x2)
+    y1 = np.int64(y1)
+    y2 = np.int64(y2)
     return {'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2,
             'center_pred': shifted_center, 'valid': True}
 
