@@ -45,7 +45,7 @@ def get_radar_info(grid_obj):
 
 def get_grid_alt(grid_size, alt_meters=1500):
     """ Returns z-index closest to alt_meters. """
-    return np.int(np.round(alt_meters/grid_size[0]))
+    return np.int64(np.round(alt_meters/grid_size[0]))
 
 
 def get_vert_projection(grid, thresh=40):

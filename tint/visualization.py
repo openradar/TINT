@@ -155,8 +155,8 @@ def lagrangian_view(tobj, grids, tmp_dir, uid=None, vmin=-8, vmax=64,
         display = pyart.graph.GridMapDisplay(grid)
 
         # Box Size
-        tx = np.int(np.round(row['grid_x']))
-        ty = np.int(np.round(row['grid_y']))
+        tx = np.int64(np.round(row['grid_x']))
+        ty = np.int64(np.round(row['grid_y']))
         tx_met = grid.x['data'][tx]
         ty_met = grid.y['data'][ty]
         lat = row['lat']
