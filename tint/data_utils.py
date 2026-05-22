@@ -60,7 +60,7 @@ def get_nexrad_keys(site, start=None, end=None):
     date_keys = [datetime.strftime(date, '%Y/%m/%d/' + site) for date in dates]
 
     conn = S3Connection(anon=True)
-    bucket = conn.get_bucket('noaa-nexrad-level2')
+    bucket = conn.get_bucket('unidata-nexrad-level2')
 
     keys = [key for date_key in date_keys
             for key in list(bucket.list(date_key))
